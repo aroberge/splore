@@ -10,41 +10,82 @@ from PyQt4.QtCore import pyqtSlot
 from random import randrange
 
 
-class ComputerLogic:
+class Controller:
     def __init__(self):
+        self.qt_app = Qt.QApplication(sys.argv)
+        self.qt_app.setStyle("plastique")
+        self.gui = ComputerWindow(self)
+        self.logic = ComputerLogic(self)
+
+    def run(self):
+        self.gui.show()
+        self.qt_app.exec_()
+
+    def update_display(self, info, value=None):
+        if info == "score":
+            self.gui.update_score(value)
+        elif info == "question":
+            self.gui.update_question(value)
+        elif info == "missing answer":
+            self.gui.handle_missing_answer()
+        elif info == "result":
+            self.gui.update_result(value)
+        elif info == "success":
+            self.gui.update_image(value)
+        else:
+            raise NotImplementedError
+
+    def update_logic(self, info, value=None):
+        if info == "new game":
+            self.logic.reset_values()
+        elif info == "answer":
+            self.logic.analyze_answer(value)
+        elif info == "new operation":
+            self.logic.new_operation()
+        else:
+            raise NotImplementedError
+
+
+class ComputerLogic:
+    def __init__(self, parent=None):
+        self.parent = parent
         self.personal_score = 0
         self.attempts = 0
-        self.gui = ComputerWindow(self)
         self.new_operation()
-        self.gui.run()
 
     def reset_values(self):
         self.personal_score = 0
         self.attempts = 0
-        self.gui.update_score('0/0')
+        self.parent.update_display("score", '0/0')
 
     def new_operation(self):
         first_number = randrange(10)
         second_number = randrange(10)
-        operation = str(first_number) + 'x' + str(second_number)
-        self.operand_result = first_number*second_number
-        self.gui.update_question(operation)
-        self.gui.update_score(str(self.personal_score) + '/' + str(self.attempts))
+        question = str(first_number) + 'x' + str(second_number)
+        self.operand_result = first_number * second_number
+
+        self.parent.update_display("question", question)
+        score = str(self.personal_score) + '/' + str(self.attempts)
+        self.parent.update_display("score", score)
 
     def analyze_answer(self, answer):
         if answer == '':
-            self.gui.handle_missing_answer()
+            self.parent.update_display("missing answer")
         else:
             try:
                 answer = int(answer)
-                self.gui.update_result('You said ' + str(answer) +
-                                    ', result was ' + str(self.operand_result))
+                result = "You said {}, result was {}".format(answer,
+                          self.operand_result)
+                self.parent.update_display("result", result)
+
                 success = int(answer) == int(self.operand_result)
                 if success:
                     self.personal_score += 1
-                self.gui.update_image(success)
+                self.parent.update_display("success", success)
+
             except ValueError:
-                self.gui.update_result('Hum... Why not try with numbers ?')
+                self.parent.update_display("result",
+                        'Hum... Why not try with numbers ?')
 
             self.attempts += 1
 
@@ -140,7 +181,7 @@ class ComputerWindow(QtGui.QWidget):
         ''' Apply logic and show results '''
         # Get user answer
         answer = self.question.text()
-        self.parent.analyze_answer(answer)
+        self.parent.update_logic("answer", answer)
 
         # In all cases, show text message
         self.result.show()
@@ -181,7 +222,7 @@ class ComputerWindow(QtGui.QWidget):
         source = self.sender()
 
         if source.value == 1:
-            self.parent.reset_values()
+            self.parent.update_logic("new game")
 
         self.question.clear()
         self.question.setDisabled(0)
@@ -189,29 +230,9 @@ class ComputerWindow(QtGui.QWidget):
         self.result_image.hide()
         self.button_retry.hide()
         self.build_button.show()
-        self.parent.new_operation()
-
-    # TODO : connect this function to the app
-    def query_exit(self):
-        exit = QtGui.QMessageBox.information(self,
-                                        "Quit...",
-                                        "Do you really want to quit ?",
-                                        "&Ok",
-                                        "&Cancel",
-                                        "", 0, 1)
-        if exit == 0:
-            qt_app.quit()
-
-    def run(self):
-        # show the layout
-        self.show()
-        # Run the qt application
-        qt_app.exec_()
-        sys.exit()
+        self.parent.update_logic("new operation")
 
 
-# Create an instance of the application and run it
 if __name__ == "__main__":
-    qt_app = Qt.QApplication(sys.argv)
-    Qt.QApplication.setStyle("plastique")
-    app = ComputerLogic()
+    app = Controller()
+    app.run()
