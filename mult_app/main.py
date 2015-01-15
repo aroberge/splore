@@ -135,6 +135,7 @@ class ComputerWindow(QtGui.QWidget):
         self.question_label = QtGui.QLabel('')
         self.question_label.setMaximumWidth(50)
         self.question = QtGui.QLineEdit()
+        self.question.returnPressed.connect(self.show_result)
         self.question.setPlaceholderText('What about the result, huh ?')
         # Create White line to avoid content up on button hide
         fix_button_position = QtGui.QLabel('')
