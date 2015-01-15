@@ -28,7 +28,7 @@ class Controller:
             self.gui.update_question(value)
         elif info == "missing answer":
             self.gui.handle_missing_answer()
-        elif info == "result":
+        elif info == "feedback":
             self.gui.update_result(value)
         elif info == "success":
             self.gui.update_image(value)
@@ -72,22 +72,22 @@ class ComputerLogic:
         if answer == '':
             self.parent.update_display("missing answer")
         else:
+            self.attempts += 1
             try:
                 answer = int(answer)
-                result = "You said {}, result was {}".format(answer,
-                          self.operand_result)
-                self.parent.update_display("result", result)
-
-                success = int(answer) == int(self.operand_result)
-                if success:
-                    self.personal_score += 1
-                self.parent.update_display("success", success)
-
             except ValueError:
                 self.parent.update_display("result",
                         'Hum... Why not try with numbers ?')
+                return
 
-            self.attempts += 1
+            feedback = "You said {}, result was {}".format(answer,
+                      self.operand_result)
+            self.parent.update_display("feedback", feedback)
+
+            success = int(answer) == int(self.operand_result)
+            if success:
+                self.personal_score += 1
+            self.parent.update_display("success", success)
 
 
 class ComputerWindow(QtGui.QWidget):
