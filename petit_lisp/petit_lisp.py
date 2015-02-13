@@ -11,6 +11,7 @@
 
 import sys
 import traceback
+import operator
 
 Symbol = str
 
@@ -29,7 +30,6 @@ class Env(dict):
 
 def add_globals(env):
     "Add some built-in procedures and variables to the environment."
-    import operator
     env.update(
         {'+': operator.add,
          '-': operator.sub,
@@ -46,25 +46,23 @@ def add_globals(env):
 
 global_env = add_globals(Env())
 
-isa = isinstance
-
 
 def eval(x, env=global_env):
     "Evaluate an expression in an environment."
-    if isa(x, Symbol):              # variable reference
+    if isinstance(x, Symbol):              # variable reference
         return env.find(x)[x]
-    elif not isa(x, list):          # constant literal
+    elif not isinstance(x, list):          # constant literal
         return x
     elif x[0] == 'quote' or x[0] == 'q':  # (quote exp), or (q exp)
         (_, exp) = x
         return exp
     elif x[0] == 'atom?':           # (atom? exp)
         (_, exp) = x
-        return not isa(eval(exp, env), list)
+        return not isinstance(eval(exp, env), list)
     elif x[0] == 'eq?':             # (eq? exp1 exp2)
         (_, exp1, exp2) = x
         v1, v2 = eval(exp1, env), eval(exp2, env)
-        return (not isa(v1, list)) and (v1 == v2)
+        return (not isinstance(v1, list)) and (v1 == v2)
     elif x[0] == 'car':             # (car exp)
         (_, exp) = x
         return eval(exp, env)[0]
@@ -119,11 +117,11 @@ def read_from(tokens):
         raise SyntaxError('unexpected EOF while reading')
     token = tokens.pop(0)
     if '(' == token:
-        L = []
+        lst = []
         while tokens[0] != ')':
-            L.append(read_from(tokens))
-        tokens.pop(0) # pop off ')'
-        return L
+            lst.append(read_from(tokens))
+        tokens.pop(0)   # pop off ')'
+        return lst
     elif ')' == token:
         raise SyntaxError('unexpected )')
     else:
@@ -143,7 +141,7 @@ def atom(token):
 
 def to_string(exp):
     "Convert a Python object back into a Lisp-readable string."
-    if not isa(exp, list):
+    if not isinstance(exp, list):
         return str(exp)
     else:
         return '('+' '.join(map(to_string, exp))+')'
@@ -199,26 +197,32 @@ def repl(prompt='tiddlylisp> '):
     "A prompt-read-eval-print loop."
     while True:
         try:
-            val = eval(parse(input(prompt)))
+            inp = input(prompt)
+            val = eval(parse(inp))
             if val is not None:
                 print(to_string(val))
         except KeyboardInterrupt:
             print("\nExiting tiddlylisp\n")
             sys.exit()
         except:
-            handle_error()
+            handle_error(inp)
 
 
-def handle_error():
+def handle_error(inp):
     """
     Simple error handling for both the repl and load.
     """
+    if inp.lower() == "quit":
+        print("\nGoodbye!")
+        sys.exit()
     print("An error occurred.  Here's the Python stack trace:\n")
     traceback.print_exc()
+    print("")
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         load(sys.argv[1])
     else:
+        print("\n  ====  Enter 'quit' to end.  ====\n")
         repl()
