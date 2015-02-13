@@ -144,7 +144,7 @@ def to_string(exp):
     if not isinstance(exp, list):
         return str(exp)
     else:
-        return '('+' '.join(map(to_string, exp))+')'
+        return '(' + ' '.join(to_string(s) for s in exp) + ')'
 
 
 def load(filename):
@@ -193,11 +193,16 @@ def running_paren_sums(program):
     return rps
 
 
-def repl(prompt='tiddlylisp> '):
+def repl(prompt='repl> '):
     "A prompt-read-eval-print loop."
+    prompt2 = "...  "
     while True:
         try:
             inp = input(prompt)
+            open_parens = inp.count("(") - inp.count(")")
+            while open_parens > 0:
+                inp += ' ' + input(prompt2)
+                open_parens = inp.count("(") - inp.count(")")
             val = eval(parse(inp))
             if val is not None:
                 print(to_string(val))
