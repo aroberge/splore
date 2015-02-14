@@ -21,6 +21,7 @@ def my_prod(*args):
         ans *= arg
     return ans
 
+
 global_env = {
     '+': my_sum,
     '-': operator.sub,
