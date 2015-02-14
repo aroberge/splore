@@ -1,3 +1,5 @@
+'''First version of our "petit lisp" repl program. Only handles sums of
+   integers'''
 
 global_env = {'+': sum}
 
@@ -19,7 +21,7 @@ def convert_to_list(tokens):
 
 
 def atomize(token):
-    "converts token to integers if possible"
+    "Converts individual tokens to integers if possible"
     try:
         return int(token)
     except ValueError:

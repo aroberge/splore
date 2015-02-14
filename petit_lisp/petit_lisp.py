@@ -39,7 +39,8 @@ def add_globals(env):
          '<': operator.lt,
          '>=': operator.ge,
          '<=': operator.le,
-         '=': operator.eq
+         '=': operator.eq,
+         '//': operator.floordiv
          })
     env.update({'True': True, 'False': False})
     return env

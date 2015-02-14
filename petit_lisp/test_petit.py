@@ -47,7 +47,7 @@ class TestParse(unittest.TestCase):
         self.assertEqual(['+', 3, 4], pl.parse("(+ 3 4)"), msg="basic")
         self.assertEqual(['+', 3, 4], pl.parse(" ( + 3  4  ) "), msg="extra spaces")
 
-    @unittest.skipIf(version == 0, '')
+    @unittest.skipIf(version != 1, '')
     def test_parse_add_more(self):
         self.assertEqual(['+', 3, 4, 5], pl.parse(" ( + 3 4 5)"), msg="more args")
 
@@ -57,14 +57,32 @@ class TestEvaluate(unittest.TestCase):
     def test_add(self):
         self.assertEqual(7, pl.evaluate(pl.parse("(+ 3 4)")))
 
-    @unittest.skipIf(version == 0, '')
+    @unittest.skipIf(0 < version < 2, '')
+    def test_add_floats(self):
+        self.assertEqual(7.75, pl.evaluate(pl.parse("(+ 3.25 4.5)")))
+
+    @unittest.skipIf(0 < version < 2, '')
+    def test_sub(self):
+        self.assertEqual(1, pl.evaluate(pl.parse("(- 4 3)")))
+        self.assertEqual(-1, pl.evaluate(pl.parse("(- 3 4)")))
+
+    @unittest.skipIf(version != 1, '')
     def test_add_more(self):
         self.assertEqual(12, pl.evaluate(pl.parse("(+ 3 4 5)")))
 
     @unittest.skipIf(0 < version < 2, '')
     def test_mul(self):
         self.assertEqual(12, pl.evaluate(pl.parse("(* 3 4)")))
+        self.assertEqual(2.4, pl.evaluate(pl.parse("(* 0.6 4)")))
 
+    @unittest.skipIf(0 < version < 2, '')
+    def test_div(self):
+        self.assertEqual(2.0, pl.evaluate(pl.parse("(/ 8 4)")))
+
+    @unittest.skipIf(0 < version < 2, '')
+    def test_floor_div(self):
+        self.assertEqual(2, pl.evaluate(pl.parse("(// 8 4)")))
+        self.assertEqual(2, pl.evaluate(pl.parse("(// 9.1 4)")))
 
 if __name__ == '__main__':
     unittest.main()
