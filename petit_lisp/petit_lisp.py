@@ -47,7 +47,7 @@ def add_globals(env):
 global_env = add_globals(Env())
 
 
-def eval(x, env=global_env):
+def evaluate(x, env=global_env):
     "Evaluate an expression in an environment."
     if isinstance(x, Symbol):              # variable reference
         return env.find(x)[x]
@@ -58,45 +58,45 @@ def eval(x, env=global_env):
         return exp
     elif x[0] == 'atom?':           # (atom? exp)
         (_, exp) = x
-        return not isinstance(eval(exp, env), list)
+        return not isinstance(evaluate(exp, env), list)
     elif x[0] == 'eq?':             # (eq? exp1 exp2)
         (_, exp1, exp2) = x
-        v1, v2 = eval(exp1, env), eval(exp2, env)
+        v1, v2 = evaluate(exp1, env), evaluate(exp2, env)
         return (not isinstance(v1, list)) and (v1 == v2)
     elif x[0] == 'car':             # (car exp)
         (_, exp) = x
-        return eval(exp, env)[0]
+        return evaluate(exp, env)[0]
     elif x[0] == 'cdr':             # (cdr exp)
         (_, exp) = x
-        return eval(exp, env)[1:]
+        return evaluate(exp, env)[1:]
     elif x[0] == 'cons':            # (cons exp1 exp2)
         (_, exp1, exp2) = x
-        return [eval(exp1, env)]+eval(exp2, env)
+        return [evaluate(exp1, env)]+evaluate(exp2, env)
     elif x[0] == 'cond':            # (cond (p1 e1) ... (pn en))
         for (p, e) in x[1:]:
-            if eval(p, env):
-                return eval(e, env)
+            if evaluate(p, env):
+                return evaluate(e, env)
     elif x[0] == 'null?':           # (null? exp)
         (_, exp) = x
-        return eval(exp, env) == []
+        return evaluate(exp, env) == []
     elif x[0] == 'if':              # (if test conseq alt)
         (_, test, conseq, alt) = x
-        return eval((conseq if eval(test, env) else alt), env)
+        return evaluate((conseq if evaluate(test, env) else alt), env)
     elif x[0] == 'set!':            # (set! var exp)
         (_, var, exp) = x
-        env.find(var)[var] = eval(exp, env)
+        env.find(var)[var] = evaluate(exp, env)
     elif x[0] == 'define':          # (define var exp)
         (_, var, exp) = x
-        env[var] = eval(exp, env)
+        env[var] = evaluate(exp, env)
     elif x[0] == 'lambda':          # (lambda (var*) exp)
         (_, vars, exp) = x
-        return lambda *args: eval(exp, Env(vars, args, env))
+        return lambda *args: evaluate(exp, Env(vars, args, env))
     elif x[0] == 'begin':           # (begin exp*)
         for exp in x[1:]:
-            val = eval(exp, env)
+            val = evaluate(exp, env)
         return val
     else:                           # (proc exp*)
-        exps = [eval(exp, env) for exp in x]
+        exps = [evaluate(exp, env) for exp in x]
         proc = exps.pop(0)
         return proc(*exps)
 
@@ -166,7 +166,7 @@ def load(filename):
         full_line += program_line+" "
         if paren_sum == 0 and full_line.strip() != "":
             try:
-                val = eval(parse(full_line))
+                val = evaluate(parse(full_line))
                 if val is not None:
                     print(to_string(val))
             except:
@@ -193,24 +193,30 @@ def running_paren_sums(program):
     return rps
 
 
-def repl(prompt='repl> '):
+def repl():
     "A prompt-read-eval-print loop."
-    prompt2 = "...  "
     while True:
         try:
-            inp = input(prompt)
-            open_parens = inp.count("(") - inp.count(")")
-            while open_parens > 0:
-                inp += ' ' + input(prompt2)
-                open_parens = inp.count("(") - inp.count(")")
-            val = eval(parse(inp))
+            inp = read_expression()
+            val = evaluate(parse(inp))
             if val is not None:
                 print(to_string(val))
         except KeyboardInterrupt:
-            print("\nExiting tiddlylisp\n")
+            print("\nExiting petit_lisp\n")
             sys.exit()
         except:
             handle_error(inp)
+
+
+def read_expression():
+    prompt = 'repl> '
+    prompt2 = ' ... '
+    inp = input(prompt)
+    open_parens = inp.count("(") - inp.count(")")
+    while open_parens > 0:
+        inp += ' ' + input(prompt2)
+        open_parens = inp.count("(") - inp.count(")")
+    return inp
 
 
 def handle_error(inp):
