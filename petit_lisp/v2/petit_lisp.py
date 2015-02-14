@@ -8,10 +8,23 @@
 
 import operator
 
+
+def my_sum(*args):
+    '''sum a list of arguments'''
+    return sum(arg for arg in args)
+
+
+def my_prod(*args):
+    '''multiply a list of arguments'''
+    ans = 1
+    for arg in args:
+        ans *= arg
+    return ans
+
 global_env = {
-    '+': operator.add,
+    '+': my_sum,
     '-': operator.sub,
-    '*': operator.mul,
+    '*': my_prod,
     '/': operator.truediv,
     '//': operator.floordiv,
     'exit': exit,
