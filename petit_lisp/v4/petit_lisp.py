@@ -102,16 +102,12 @@ def read_expression():
     return inp
 
 
-def handle_error(inp, expr=None, source=None):
+def handle_error():
     """
-    Simple error handling for both the repl and load.
+    Simple error handling.
     """
-    print("An error occured in {}.\n".format(repr(source)))
-    print("The original input was:\n\n{}\n".format(inp))
-    if expr is not None:
-        print("The expression was:\n\n{}\n".format(expr))
 
-    print("Here's the Python stack trace:\n")
+    print("an error occurred. Here's the Python traceback:\n")
     traceback.print_exc()
     print()
 
@@ -124,20 +120,14 @@ def repl():
             continue
 
         try:
-            expr = parse(inp)
-        except:
-            handle_error(inp, source="parse")
-            continue
-
-        try:
-            val = evaluate(expr)
+            val = evaluate(parse(inp))
         except SystemExit:
             exit()
         except:
-            handle_error(inp=inp, expr=expr, source="evaluate")
+            handle_error()
             continue
-        if val is not None:
-            print(val)
+
+        print(val)
 
 if __name__ == '__main__':
     repl()
