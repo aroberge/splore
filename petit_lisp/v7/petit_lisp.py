@@ -1,8 +1,10 @@
-'''Sixth version.
+'''Seventh version.
 
-   * Reading programs from file
+   * Supporting comments
+   * Adding more mathematical operations (and variables)
 '''
 
+import math
 import operator
 import traceback
 import pprint
@@ -25,6 +27,7 @@ def my_prod(*args):
 def common_env(env):
     "Add some built-in procedures and variables to the environment."
     env = Env()
+    env.update(vars(math))  # sin, cos, sqrt, pi, ...
     env.update({
         '+': my_sum,
         '-': operator.sub,
@@ -135,6 +138,8 @@ def load(filename, start_repl=True):
     rps = running_paren_sums(program)
     full_line = ""
     for ((linenumber, paren_sum), program_line) in zip(rps, program):
+        if ";" in program_line:
+            program_line = program_line.split(";")[0]
         program_line = program_line.strip()
         full_line += program_line + " "
         if paren_sum == 0 and full_line.strip():

@@ -24,6 +24,7 @@ def my_prod(*args):
 
 def common_env(env):
     "Add some built-in procedures and variables to the environment."
+    env = Env()
     env.update({
         '+': my_sum,
         '-': operator.sub,

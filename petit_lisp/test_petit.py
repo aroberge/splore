@@ -121,5 +121,16 @@ class TestEvaluate(unittest.TestCase):
         self.assertEqual(None, pl.load("test_define_x3.lisp", start_repl=False))
         self.assertEqual(3, pl.evaluate(pl.parse("x")))
 
+    @unittest.skipIf(0 < version < 7, '')
+    def test_load_file_with_comments(self):
+        self.assertEqual(None, pl.load("test_comments.lisp", start_repl=False))
+        self.assertEqual(49, pl.evaluate(pl.parse("(square 7)")))
+
+    @unittest.skipIf(0 < version < 7, '')
+    def test_sqrt(self):
+        # verify that math functions are loaded properly; only need to verify one
+        self.assertEqual(4.0, pl.evaluate(pl.parse("(sqrt 16)")))
+
+
 if __name__ == '__main__':
     unittest.main()

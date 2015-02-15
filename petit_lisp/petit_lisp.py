@@ -9,9 +9,12 @@
 # Converted to work with Python 3 and extended
 #
 
+import math
+import operator
+import pprint
+import re
 import sys
 import traceback
-import operator
 
 Symbol = str
 
@@ -29,8 +32,17 @@ def my_prod(*args):
     return ans
 
 
+class Procedure(object):
+    "A user-defined procedure."
+    def __init__(self, params, body, env):
+        self.params, self.body, self.env = params, body, env
+
+    def __call__(self, *args):
+        return evaluate(self.body, Env(self.params, args, self.env))
+
+
 class Env(dict):
-    "An environment: a dict of {'var':val} pairs, with an outer Env."
+    "An environment: a dict of {'var': val} pairs, with an outer Env."
 
     def __init__(self, params=(), args=(), outer=None):
         self.update(zip(params, args))
@@ -38,11 +50,18 @@ class Env(dict):
 
     def find(self, var):
         "Find the innermost Env where var appears."
-        return self if var in self else self.outer.find(var)
+        if var in self:
+            return self
+        elif self.outer is not None:
+            return self.outer.find(var)
+        else:
+            raise ValueError("{} is not defined".format(var))
 
 
-def add_globals(env):
+def common_env(env):
     "Add some built-in procedures and variables to the environment."
+    env = Env()
+    env.update(vars(math))  # sin, cos, sqrt, pi, ...
     env.update(
         {'+': my_sum,
          '-': operator.sub,
@@ -60,7 +79,7 @@ def add_globals(env):
     env.update({'True': True, 'False': False})
     return env
 
-global_env = add_globals(Env())
+global_env = common_env(Env())
 
 
 def evaluate(x, env=global_env):
@@ -165,29 +184,28 @@ def to_string(exp):
 
 def load(filename, start_repl=True):
     """
-    Load the tiddlylisp program in filename, execute it, and start the
-    repl.  If an error occurs, execution stops, and we are left in the
-    repl.  Note that load copes with multi-line tiddlylisp code by
-    merging lines until the number of opening and closing parentheses
-    match.
+    Load the program in filename, execute it, and start the repl.
+    If an error occurs, execution stops, and we are left in the repl.
     """
-    print("Loading and executing %s" % filename)
-    f = open(filename, "r")
-    program = f.readlines()
-    f.close()
+    print("\n ==> Loading and executing {}\n".format(filename))
+
+    with open(filename, "r") as f:
+        program = f.readlines()
     rps = running_paren_sums(program)
     full_line = ""
-    for (paren_sum, program_line) in zip(rps, program):
+    for ((linenumber, paren_sum), program_line) in zip(rps, program):
+        program_line = remove_comments(program_line)
         program_line = program_line.strip()
-        full_line += program_line+" "
-        if paren_sum == 0 and full_line.strip() != "":
+        full_line += program_line + " "
+        if paren_sum == 0 and full_line.strip():
             try:
                 val = evaluate(parse(full_line))
                 if val is not None:
-                    print(to_string(val))
+                    print(val)
             except:
                 handle_error()
-                print("\nThe line in which the error occurred:\n%s" % full_line)
+                print("\nAn error occured on line {}:\n{}".format(linenumber,
+                                                                     full_line))
                 break
             full_line = ""
     if start_repl:
@@ -200,14 +218,29 @@ def running_paren_sums(program):
     a running sum of the per-line difference between the number of '('
     parentheses and the number of ')' parentheses.
     """
-    count_open_parens = lambda line: line.count("(")-line.count(")")
-    paren_counts = map(count_open_parens, program)
-    rps = []
     total = 0
-    for paren_count in paren_counts:
-        total += paren_count
-        rps.append(total)
+    rps = []
+    for linenumber, line in enumerate(program):
+        total += line.count("(")-line.count(")")
+        rps.append((linenumber, total))
     return rps
+
+
+def remove_comments(string):
+    '''remove comments identified by using a ; as starting character'''
+    pattern = '([^"]*(?:\\.[^\\"]*))|(;.*$)'
+    # first group captures quoted double strings
+    # second group captures comments (;this is a comment)
+    regex = re.compile(pattern)
+
+    def _replacer(match):
+        # if the 2nd group (capturing comments) is not None,
+        # it means we have captured a non-quoted (real) comment string.
+        if match.group(2) is not None:
+            return ""  # so we will return empty to remove the comment
+        else:  # otherwise, we will return the 1st group
+            return match.group(1)  # captured quoted-string
+    return regex.sub(_replacer, string)
 
 
 def repl():
@@ -226,6 +259,7 @@ def repl():
 
 
 def read_expression():
+    '''Reads an expression from a prompt'''
     prompt = 'repl> '
     prompt2 = ' ... '
     inp = input(prompt)
@@ -233,6 +267,9 @@ def read_expression():
     while open_parens > 0:
         inp += ' ' + input(prompt2)
         open_parens = inp.count("(") - inp.count(")")
+    if inp.startswith("parse "):
+        pprint.pprint(parse(inp[6:]))
+        return None
     return inp
 
 
