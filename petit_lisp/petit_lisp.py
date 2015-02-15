@@ -40,7 +40,9 @@ def add_globals(env):
          '>=': operator.ge,
          '<=': operator.le,
          '=': operator.eq,
-         '//': operator.floordiv
+         '//': operator.floordiv,
+         'exit': exit,
+         'quit': exit
          })
     env.update({'True': True, 'False': False})
     return env
@@ -202,7 +204,7 @@ def repl():
             val = evaluate(parse(inp))
             if val is not None:
                 print(to_string(val))
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, SystemExit):
             print("\nExiting petit_lisp\n")
             sys.exit()
         except:
@@ -224,9 +226,6 @@ def handle_error(inp):
     """
     Simple error handling for both the repl and load.
     """
-    if inp.lower() == "quit":
-        print("\nGoodbye!")
-        sys.exit()
     print("An error occurred.  Here's the Python stack trace:\n")
     traceback.print_exc()
     print("")
@@ -236,5 +235,5 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         load(sys.argv[1])
     else:
-        print("\n  ====  Enter 'quit' to end.  ====\n")
+        print("\n  ====  Enter (quit) to end.  ====\n")
         repl()

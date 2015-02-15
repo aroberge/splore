@@ -1,6 +1,7 @@
 '''Fourth version.
 
-   * (Re-) Defining variables
+   * Defining variables
+   * Multiple environments/scopes
 '''
 
 import operator
@@ -20,31 +21,56 @@ def my_prod(*args):
     return ans
 
 
-global_env = {
-    '+': my_sum,
-    '-': operator.sub,
-    '*': my_prod,
-    '/': operator.truediv,
-    '//': operator.floordiv,
-    'exit': exit,
-    'quit': exit
-}
+class Env(dict):
+    "An environment: a dict of {'var':val} pairs, with an outer Env."
+
+    def __init__(self, params=(), args=(), outer=None):
+        self.update(zip(params, args))
+        self.outer = outer
+
+    def find(self, var):
+        "Find the innermost Env where var appears."
+        if var in self:
+            return self
+        elif self.outer is not None:
+            return self.outer.find(var)
+        else:
+            raise ValueError("{} is not defined".format(var))
+
+
+def add_globals(env):
+    "Add some built-in procedures and variables to the environment."
+    env.update({
+        '+': my_sum,
+        '-': operator.sub,
+        '*': my_prod,
+        '/': operator.truediv,
+        '//': operator.floordiv,
+        'exit': exit,
+        'quit': exit
+    })
+    return env
+
+global_env = add_globals(Env())
 
 
 def evaluate(x, env=global_env):
     "Evaluate an expression in the global environment."
     if isinstance(x, str):            # variable reference
-        return env[x]
+        return env.find(x)[x]
     elif not isinstance(x, list):     # constant literal
         return x
     elif x[0] == 'define':            # (define var exp)
         (_, var, exp) = x
         env[var] = evaluate(exp, env)
-    elif x[0] == 'set!':              # (set! var exp)
+    elif x[0] == 'set!':            # (set! var exp)
         (_, var, exp) = x
-        env[var] = evaluate(exp, env)
+        env.find(var)[var] = evaluate(exp, env)
+    elif x[0] == 'lambda':          # (lambda (var*) exp)
+        (_, vars, exp) = x
+        return lambda *args: evaluate(exp, Env(vars, args, env))
     else:                             # (procedure exp*)
-        exps = [evaluate(exp) for exp in x]
+        exps = [evaluate(exp, env) for exp in x]
         procedure = exps.pop(0)
         return procedure(*exps)
 
@@ -125,11 +151,13 @@ def repl():
 
         try:
             val = evaluate(expr)
-        except SystemExit:
+        except (KeyboardInterrupt, SystemExit):
+            print("\nExiting petit_lisp\n")
             exit()
         except:
             handle_error(inp=inp, expr=expr, source="evaluate")
             continue
+
         if val is not None:
             print(val)
 
