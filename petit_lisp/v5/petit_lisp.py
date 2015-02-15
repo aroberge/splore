@@ -22,8 +22,31 @@ def my_prod(*args):
     return ans
 
 
+def common_env(env):
+    "Add some built-in procedures and variables to the environment."
+    env.update({
+        '+': my_sum,
+        '-': operator.sub,
+        '*': my_prod,
+        '/': operator.truediv,
+        '//': operator.floordiv,
+        'exit': exit,
+        'quit': exit
+    })
+    return env
+
+
+class Procedure(object):
+    "A user-defined procedure."
+    def __init__(self, params, body, env):
+        self.params, self.body, self.env = params, body, env
+
+    def __call__(self, *args):
+        return evaluate(self.body, Env(self.params, args, self.env))
+
+
 class Env(dict):
-    "An environment: a dict of {'var':val} pairs, with an outer Env."
+    "An environment: a dict of {'var': val} pairs, with an outer Env."
 
     def __init__(self, params=(), args=(), outer=None):
         self.update(zip(params, args))
@@ -38,21 +61,7 @@ class Env(dict):
         else:
             raise ValueError("{} is not defined".format(var))
 
-
-def add_globals(env):
-    "Add some built-in procedures and variables to the environment."
-    env.update({
-        '+': my_sum,
-        '-': operator.sub,
-        '*': my_prod,
-        '/': operator.truediv,
-        '//': operator.floordiv,
-        'exit': exit,
-        'quit': exit
-    })
-    return env
-
-global_env = add_globals(Env())
+global_env = common_env(Env())
 
 
 def evaluate(x, env=global_env):
@@ -64,13 +73,13 @@ def evaluate(x, env=global_env):
     elif x[0] == 'define':            # (define var exp)
         (_, var, exp) = x
         env[var] = evaluate(exp, env)
-    elif x[0] == 'set!':            # (set! var exp)
+    elif x[0] == 'set!':              # (set! var exp)
         (_, var, exp) = x
         env.find(var)[var] = evaluate(exp, env)
-    elif x[0] == 'lambda':          # (lambda (var*) exp)
-        (_, vars, exp) = x
-        return lambda *args: evaluate(exp, Env(vars, args, env))
-    else:                             # (procedure exp*)
+    elif x[0] == 'lambda':            # (lambda (params*) body)
+        (_, params, body) = x
+        return Procedure(params, body, env)
+    else:                             # ("procedure" exp*)
         exps = [evaluate(exp, env) for exp in x]
         procedure = exps.pop(0)
         return procedure(*exps)

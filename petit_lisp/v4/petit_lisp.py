@@ -44,7 +44,7 @@ def evaluate(x):
     elif x[0] == 'set!':              # (set! var exp)
         (_, var, exp) = x
         global_env[var] = evaluate(exp)
-    else:                             # (procedure exp*)
+    else:                             # ("procedure" exp*)
         exps = [evaluate(exp) for exp in x]
         procedure = exps.pop(0)
         return procedure(*exps)

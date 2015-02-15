@@ -40,7 +40,7 @@ def evaluate(x):
         return global_env[x]
     elif not isinstance(x, list):     # constant literal
         return x
-    else:                             # (procedure exp*)
+    else:                             # ("procedure" exp*)
         exps = [evaluate(exp) for exp in x]
         procedure = exps.pop(0)
         return procedure(*exps)

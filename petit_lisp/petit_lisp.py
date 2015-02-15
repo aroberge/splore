@@ -236,7 +236,7 @@ def read_expression():
     return inp
 
 
-def handle_error(inp):
+def handle_error():
     """
     Simple error handling for both the repl and load.
     """
