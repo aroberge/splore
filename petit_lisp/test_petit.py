@@ -132,5 +132,49 @@ class TestEvaluate(unittest.TestCase):
         self.assertEqual(4.0, pl.evaluate(pl.parse("(sqrt 16)")))
 
 
+class TestLogic(unittest.TestCase):
+
+    @unittest.skipIf(0 < version < 8, '')
+    def test_if(self):
+        # test "if", "#t", "#f"
+        self.assertEqual(None, pl.evaluate(pl.parse("(if #t (define x 1) (define x 2))")))
+        self.assertEqual(1, pl.evaluate(pl.parse("x")))
+        self.assertEqual(None, pl.evaluate(pl.parse("(if #f (define x 3) (define x 4))")))
+        self.assertEqual(4, pl.evaluate(pl.parse("x")))
+
+    @unittest.skipIf(0 < version < 8, '')
+    def test_not(self):
+        # test "if", "#t", "#f"
+        self.assertEqual(None, pl.evaluate(pl.parse("(if (not #t) (define x 1) (define x 2))")))
+        self.assertEqual(2, pl.evaluate(pl.parse("x")))
+        self.assertEqual(None, pl.evaluate(pl.parse("(if (not #f) (define x 3) (define x 4))")))
+        self.assertEqual(3, pl.evaluate(pl.parse("x")))
+
+    @unittest.skipIf(0 < version < 8, '')
+    def test_cond(self):
+        # test "cond", ">", ">" ,"="
+        expr = """
+(define abs (lambda (x)
+    (cond ((> x 0) x)
+          ((= x 0) 0)
+          ((< x 0) (- x)))))"""
+        self.assertEqual(None, pl.evaluate(pl.parse(expr)))
+        self.assertEqual(2, pl.evaluate(pl.parse("(abs 2)")))
+        self.assertEqual(3, pl.evaluate(pl.parse("(abs -3)")))
+        self.assertEqual(0, pl.evaluate(pl.parse("(abs 0)")))
+
+    @unittest.skipIf(0 < version < 8, '')
+    def test_cond_with_else(self):
+        # test "cond", "else", "<="
+        expr = """
+(define abs2 (lambda (x)
+    (cond ((<= x 0) (- x))
+          (else x)
+          )))"""
+        self.assertEqual(None, pl.evaluate(pl.parse(expr)))
+        self.assertEqual(2, pl.evaluate(pl.parse("(abs2 2)")))
+        self.assertEqual(3, pl.evaluate(pl.parse("(abs2 -3)")))
+        self.assertEqual(0, pl.evaluate(pl.parse("(abs2 0)")))
+
 if __name__ == '__main__':
     unittest.main()

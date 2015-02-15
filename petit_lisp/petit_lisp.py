@@ -32,6 +32,14 @@ def my_prod(*args):
     return ans
 
 
+def my_sub(a, b=None):
+    '''substraction or negation'''
+    if b is None:
+        return -a
+    else:
+        return a - b
+
+
 class Procedure(object):
     "A user-defined procedure."
     def __init__(self, params, body, env):
@@ -62,21 +70,24 @@ def common_env(env):
     "Add some built-in procedures and variables to the environment."
     env = Env()
     env.update(vars(math))  # sin, cos, sqrt, pi, ...
-    env.update(
-        {'+': my_sum,
-         '-': operator.sub,
-         '*': my_prod,
-         '/': operator.truediv,
-         '>': operator.gt,
-         '<': operator.lt,
-         '>=': operator.ge,
-         '<=': operator.le,
-         '=': operator.eq,
-         '//': operator.floordiv,
-         'exit': exit,
-         'quit': exit
-         })
-    env.update({'True': True, 'False': False})
+    env.update({
+        '+': my_sum,
+        '-': my_sub,
+        '*': my_prod,
+        '/': operator.truediv,
+        '//': operator.floordiv,
+        '>': operator.gt,
+        '<': operator.lt,
+        '>=': operator.ge,
+        '<=': operator.le,
+        '=': operator.eq,
+        'exit': exit,
+        'quit': exit,
+        '#t': True,
+        '#f': False,
+        'not': operator.not_,
+        'else': True    # used in cond
+    })
     return env
 
 global_env = common_env(Env())
@@ -255,7 +266,7 @@ def repl():
             print("\nExiting petit_lisp\n")
             sys.exit()
         except:
-            handle_error(inp)
+            handle_error()
 
 
 def read_expression():
