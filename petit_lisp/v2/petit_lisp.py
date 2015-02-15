@@ -3,6 +3,7 @@
    * Handles more mathematical operations, but only with two arguments.
    * Provides nicer way to exit.
    * More robust input handling.
+   * add special "hook" for parse
 
 '''
 
@@ -73,6 +74,9 @@ def read_expression():
     while open_parens > 0:
         inp += ' ' + input(prompt2)
         open_parens = inp.count("(") - inp.count(")")
+    if inp.startswith("parse "):
+        print(parse(inp[6:]))
+        return None
     return inp
 
 
@@ -80,6 +84,9 @@ def repl():
     "A read-eval-print loop."
     while True:
         inp = read_expression()
+        if not inp:
+            continue
+
         val = evaluate(parse(inp))
         print(val)
 

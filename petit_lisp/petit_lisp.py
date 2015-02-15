@@ -16,6 +16,19 @@ import operator
 Symbol = str
 
 
+def my_sum(*args):
+    '''sum a list of arguments'''
+    return sum(arg for arg in args)
+
+
+def my_prod(*args):
+    '''multiply a list of arguments'''
+    ans = 1
+    for arg in args:
+        ans *= arg
+    return ans
+
+
 class Env(dict):
     "An environment: a dict of {'var':val} pairs, with an outer Env."
 
@@ -31,9 +44,9 @@ class Env(dict):
 def add_globals(env):
     "Add some built-in procedures and variables to the environment."
     env.update(
-        {'+': operator.add,
+        {'+': my_sum,
          '-': operator.sub,
-         '*': operator.mul,
+         '*': my_prod,
          '/': operator.truediv,
          '>': operator.gt,
          '<': operator.lt,

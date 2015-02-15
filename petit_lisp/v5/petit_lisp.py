@@ -2,10 +2,12 @@
 
    * Defining variables
    * Multiple environments/scopes
+   * Add special non-lisp parse command, for convenience.
 '''
 
 import operator
 import traceback
+import pprint
 
 
 def my_sum(*args):
@@ -121,6 +123,9 @@ def read_expression():
     while open_parens > 0:
         inp += ' ' + input(prompt2)
         open_parens = inp.count("(") - inp.count(")")
+    if inp.startswith("parse "):
+        pprint.pprint(parse(inp[6:]))
+        return None
     return inp
 
 
@@ -142,6 +147,8 @@ def repl():
     "A read-eval-print loop."
     while True:
         inp = read_expression()
+        if not inp:
+            continue
 
         try:
             expr = parse(inp)

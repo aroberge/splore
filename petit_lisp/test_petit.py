@@ -47,7 +47,6 @@ class TestParse(unittest.TestCase):
         self.assertEqual(['+', 3, 4], pl.parse("(+ 3 4)"), msg="basic")
         self.assertEqual(['+', 3, 4], pl.parse(" ( + 3  4  ) "), msg="extra spaces")
 
-    @unittest.skipIf(version == 0, 'multiple args for sum')
     def test_parse_add_more(self):
         self.assertEqual(['+', 3, 4, 5], pl.parse(" ( + 3 4 5)"), msg="more args")
 
@@ -70,7 +69,6 @@ class TestEvaluate(unittest.TestCase):
         self.assertEqual(1, pl.evaluate(pl.parse("(- 4 3)")))
         self.assertEqual(-1, pl.evaluate(pl.parse("(- 3 4)")))
 
-    @unittest.skipIf(version == 0, 'multiple args for sum')
     def test_add_many(self):
         self.assertEqual(12, pl.evaluate(pl.parse("(+ 3 4 5)")))
 
@@ -79,7 +77,7 @@ class TestEvaluate(unittest.TestCase):
         self.assertEqual(12, pl.evaluate(pl.parse("(* 3 4)")))
         self.assertEqual(2.4, pl.evaluate(pl.parse("(* 0.6 4)")))
 
-    @unittest.skipIf(version < 2, 'multiple args for mul')
+    @unittest.skipIf(0 < version < 2, 'multiple args for mul')
     def test_mul_many(self):
         self.assertEqual(60, pl.evaluate(pl.parse("(* 3 4 5)")))
 
