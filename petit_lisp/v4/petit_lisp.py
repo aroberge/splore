@@ -32,18 +32,18 @@ global_env = {
 }
 
 
-def evaluate(x, env=global_env):
+def evaluate(x):
     "Evaluate an expression in the global environment."
     if isinstance(x, str):            # variable reference
-        return env[x]
+        return global_env[x]
     elif not isinstance(x, list):     # constant literal
         return x
     elif x[0] == 'define':            # (define var exp)
         (_, var, exp) = x
-        env[var] = evaluate(exp, env)
+        global_env[var] = evaluate(exp)
     elif x[0] == 'set!':              # (set! var exp)
         (_, var, exp) = x
-        env[var] = evaluate(exp, env)
+        global_env[var] = evaluate(exp)
     else:                             # (procedure exp*)
         exps = [evaluate(exp) for exp in x]
         procedure = exps.pop(0)

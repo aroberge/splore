@@ -1,6 +1,6 @@
 '''Second version.
 
-   * Handles more mathematical operations, but only with two arguments.
+   * Handles more mathematical operations.
    * Provides nicer way to exit.
    * More robust input handling.
    * add special "hook" for parse

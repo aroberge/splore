@@ -1,6 +1,6 @@
 '''Fourth version.
 
-   * Defining variables
+   * Defining procedures using lambda
    * Multiple environments/scopes
 '''
 
