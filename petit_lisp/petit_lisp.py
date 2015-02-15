@@ -163,7 +163,7 @@ def to_string(exp):
         return '(' + ' '.join(to_string(s) for s in exp) + ')'
 
 
-def load(filename):
+def load(filename, start_repl=True):
     """
     Load the tiddlylisp program in filename, execute it, and start the
     repl.  If an error occurs, execution stops, and we are left in the
@@ -190,7 +190,8 @@ def load(filename):
                 print("\nThe line in which the error occurred:\n%s" % full_line)
                 break
             full_line = ""
-    repl()
+    if start_repl:
+        repl()
 
 
 def running_paren_sums(program):

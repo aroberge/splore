@@ -116,6 +116,10 @@ class TestEvaluate(unittest.TestCase):
         self.assertEqual(None, pl.evaluate(pl.parse("(define square (lambda (x) (* x x)))")))
         self.assertEqual(9, pl.evaluate(pl.parse("(square 3)")))
 
+    @unittest.skipIf(0 < version < 6, '')
+    def test_load_file(self):
+        self.assertEqual(None, pl.load("test_define_x3.lisp", start_repl=False))
+        self.assertEqual(3, pl.evaluate(pl.parse("x")))
 
 if __name__ == '__main__':
     unittest.main()

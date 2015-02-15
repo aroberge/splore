@@ -1,12 +1,12 @@
-'''Fifth version.
+'''Sixth version.
 
-   * Defining procedures using lambda
-   * Multiple environments/scopes
+   * Reading programs from file
 '''
 
 import operator
 import traceback
 import pprint
+import sys
 
 
 def my_sum(*args):
@@ -113,6 +113,49 @@ def tokenize(s):
     return s.replace("(", " ( ").replace(")", " ) ").split()
 
 
+def load(filename, start_repl=True):
+    """
+    Load the program in filename, execute it, and start the repl.
+    If an error occurs, execution stops, and we are left in the repl.
+    """
+    print("Loading and executing %s\n" % filename)
+
+    with open(filename, "r") as f:
+        program = f.readlines()
+    rps = running_paren_sums(program)
+    full_line = ""
+    for ((linenumber, paren_sum), program_line) in zip(rps, program):
+        program_line = program_line.strip()
+        full_line += program_line + " "
+        if paren_sum == 0 and full_line.strip():
+            try:
+                val = evaluate(parse(full_line))
+                if val is not None:
+                    print(val)
+            except:
+                handle_error()
+                print("\nAn error occured on line {}:\n{}".format(linenumber,
+                                                                     full_line))
+                break
+            full_line = ""
+    if start_repl:
+        repl()
+
+
+def running_paren_sums(program):
+    """
+    Map the lines in the list program to a list whose entries contain
+    a running sum of the per-line difference between the number of '('
+    parentheses and the number of ')' parentheses.
+    """
+    total = 0
+    rps = []
+    for linenumber, line in enumerate(program):
+        total += line.count("(")-line.count(")")
+        rps.append((linenumber, total))
+    return rps
+
+
 def read_expression():
     '''Reads an expression from a prompt'''
     prompt = 'repl> '
@@ -140,6 +183,7 @@ def handle_error():
 
 def repl():
     "A read-eval-print loop."
+    print("\n  ====  Enter (quit) to end.  ====\n")
     while True:
         inp = read_expression()
         if not inp:
@@ -157,5 +201,9 @@ def repl():
         if val is not None:
             print(val)
 
-if __name__ == '__main__':
-    repl()
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        load(sys.argv[1])
+    else:
+        repl()
