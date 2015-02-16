@@ -8,6 +8,8 @@ import traceback
 import pprint
 import sys
 
+REPL_STARTED = False
+
 
 def my_sum(*args):
     '''Returns the sum of the supplied arguments'''
@@ -162,7 +164,8 @@ def load(filename):
                                                                      full_line))
                 break
             full_line = ""
-    repl()
+    if not REPL_STARTED:
+        repl()
 
 
 def running_paren_sums(program):
@@ -206,6 +209,9 @@ def handle_error():
 
 def repl():
     "A read-eval-print loop."
+    global REPL_STARTED
+    REPL_STARTED = True
+
     print("\n  ====  Enter (quit) to end.  ====\n")
     while True:
         inp = read_expression()
