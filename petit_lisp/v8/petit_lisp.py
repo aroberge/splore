@@ -15,12 +15,12 @@ import sys
 
 
 def my_sum(*args):
-    '''sum a list of arguments'''
+    '''Sums a list of arguments'''
     return sum(arg for arg in args)
 
 
 def my_prod(*args):
-    '''multiply a list of arguments'''
+    '''Multiplies a list of arguments'''
     ans = 1
     for arg in args:
         ans *= arg
@@ -33,6 +33,19 @@ def my_sub(a, b=None):
         return -a
     else:
         return a - b
+
+
+def show_variables(env):
+    '''Inspired by Python's help: shows a list of defined names and
+       their values or description
+    '''
+    print()
+    for var in env:
+        val = env[var]
+        if hasattr(val, '__doc__') and not isinstance(val, (int, float, str)):
+            val = val.__doc__
+        print("  {}: {}\n".format(var, val))
+exit.__doc__ = "Quits the repl."
 
 
 def common_env(env):
@@ -110,6 +123,8 @@ def evaluate(x, env=global_env):
     elif x[0] == 'if':                # (if test if_true other)
         (_, test, if_true, other) = x
         return evaluate((if_true if evaluate(test, env) else other), env)
+    elif x[0] == 'help':
+        show_variables(env)
     else:                             # ("procedure" exp*)
         exps = [evaluate(exp, env) for exp in x]
         procedure = exps.pop(0)

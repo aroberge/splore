@@ -12,16 +12,29 @@ import sys
 
 
 def my_sum(*args):
-    '''sum a list of arguments'''
+    '''Sums a list of arguments'''
     return sum(arg for arg in args)
 
 
 def my_prod(*args):
-    '''multiply a list of arguments'''
+    '''Multiplies a list of arguments'''
     ans = 1
     for arg in args:
         ans *= arg
     return ans
+
+
+def show_variables(env):
+    '''Inspired by Python's help: shows a list of defined names and
+       their values or description
+    '''
+    print()
+    for var in env:
+        val = env[var]
+        if hasattr(val, '__doc__') and not isinstance(val, (int, float, str)):
+            val = val.__doc__
+        print("  {}: {}\n".format(var, val))
+exit.__doc__ = "Quits the repl."
 
 
 def common_env(env):
@@ -83,6 +96,8 @@ def evaluate(x, env=global_env):
     elif x[0] == 'lambda':            # (lambda (params*) body)
         (_, params, body) = x
         return Procedure(params, body, env)
+    elif x[0] == 'help':
+        show_variables(env)
     else:                             # ("procedure" exp*)
         exps = [evaluate(exp, env) for exp in x]
         procedure = exps.pop(0)

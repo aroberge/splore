@@ -20,12 +20,12 @@ Symbol = str
 
 
 def my_sum(*args):
-    '''sum a list of arguments'''
+    '''Sums a list of arguments'''
     return sum(arg for arg in args)
 
 
 def my_prod(*args):
-    '''multiply a list of arguments'''
+    '''Multiplies a list of arguments'''
     ans = 1
     for arg in args:
         ans *= arg
@@ -38,6 +38,19 @@ def my_sub(a, b=None):
         return -a
     else:
         return a - b
+
+
+def show_variables(env):
+    '''Inspired by Python's help: shows a list of defined names and
+       their values or description
+    '''
+    print()
+    for var in env:
+        val = env[var]
+        if hasattr(val, '__doc__') and not isinstance(val, (int, float, str)):
+            val = val.__doc__
+        print("  {}: {}\n".format(var, val))
+exit.__doc__ = "Quits the repl."
 
 
 class Procedure(object):
@@ -141,6 +154,8 @@ def evaluate(x, env=global_env):
         for exp in x[1:]:
             val = evaluate(exp, env)
         return val
+    elif x[0] == 'help':
+        show_variables(env)
     else:                           # (proc exp*)
         exps = [evaluate(exp, env) for exp in x]
         proc = exps.pop(0)

@@ -22,6 +22,9 @@ def my_prod(*args):
 
 
 def show_variables(env):
+    '''Inspired by Python's help: shows a list of defined names and
+       their values or description
+    '''
     print()
     for var in env:
         val = env[var]
