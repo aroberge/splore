@@ -12,7 +12,10 @@ if __name__ == '__main__':
     import os
     if len(sys.argv) > 1 and sys.argv[1].startswith('v'):
         sys.path.insert(0, os.path.join(os.getcwd(), sys.argv[1]))
-        version = int(sys.argv[1][1:])
+        try:
+            version = int(sys.argv[1][1:])
+        except ValueError:
+            version = float(sys.argv[1][1:])
         sys.argv.pop(1)
         import petit_lisp as pl
     else:
