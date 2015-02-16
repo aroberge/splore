@@ -14,12 +14,12 @@ import sys
 
 
 def my_sum(*args):
-    '''Sums a list of arguments'''
+    '''Returns the sum of the supplied arguments'''
     return sum(arg for arg in args)
 
 
 def my_prod(*args):
-    '''Multiplies a list of arguments'''
+    '''Returns the product of the supplied arguments'''
     ans = 1
     for arg in args:
         ans *= arg
@@ -47,8 +47,8 @@ def show_variables(env):
         if hasattr(val, '__doc__') and not isinstance(val, (int, float, str)):
             val = ' '.join(val.__doc__.split('\n')[:3])
         if isinstance(val, str):
-            if len(val) > 70:
-                val = val[:70] + "..."
+            if len(val) > 75:
+                val = val[:75] + "..."
         print("  {}: {}\n".format(var, val))
 exit.__doc__ = "Quits the repl."
 

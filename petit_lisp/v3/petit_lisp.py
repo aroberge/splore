@@ -11,12 +11,12 @@ import pprint
 
 
 def my_sum(*args):
-    '''sum a list of arguments'''
+    '''Returns the sum of the supplied arguments'''
     return sum(arg for arg in args)
 
 
 def my_prod(*args):
-    '''multiply a list of arguments'''
+    '''Returns the product of the supplied arguments'''
     ans = 1
     for arg in args:
         ans *= arg

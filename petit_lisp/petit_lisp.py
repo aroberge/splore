@@ -25,7 +25,7 @@ def my_sum(*args):
 
 
 def my_prod(*args):
-    '''Multiplies a list of arguments'''
+    '''Returns the product of the supplied arguments'''
     ans = 1
     for arg in args:
         ans *= arg
@@ -53,8 +53,8 @@ def show_variables(env):
         if hasattr(val, '__doc__') and not isinstance(val, (int, float, str)):
             val = ' '.join(val.__doc__.split('\n')[:3])
         if isinstance(val, str):
-            if len(val) > 70:
-                val = val[:70] + "..."
+            if len(val) > 75:
+                val = val[:75] + "..."
         print("  {}: {}\n".format(var, val))
 exit.__doc__ = "Quits the repl."
 
@@ -159,7 +159,7 @@ def evaluate(x, env=global_env):
         for exp in x[1:]:
             val = evaluate(exp, env)
         return val
-    elif x[0] == 'help':
+    elif x[0] == 'help':            # (help)
         show_variables(env)
     else:                           # (proc exp*)
         exps = [evaluate(exp, env) for exp in x]
