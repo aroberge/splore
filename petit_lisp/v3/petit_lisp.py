@@ -29,7 +29,6 @@ global_env = {
     '*': my_prod,
     '/': operator.truediv,
     '//': operator.floordiv,
-    'exit': exit,
     'quit': exit
 }
 

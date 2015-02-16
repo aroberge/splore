@@ -63,7 +63,6 @@ def common_env(env):
         '>=': operator.ge,
         '<=': operator.le,
         '=': operator.eq,
-        'exit': exit,
         'quit': exit,
         '#t': True,
         '#f': False,

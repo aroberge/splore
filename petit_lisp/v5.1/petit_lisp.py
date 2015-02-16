@@ -43,7 +43,6 @@ def common_env(env):
         '*': my_prod,
         '/': operator.truediv,
         '//': operator.floordiv,
-        'exit': exit,
         'quit': exit
     })
     return env
