@@ -33,7 +33,7 @@ def my_prod(*args):
 
 
 def my_sub(a, b=None):
-    '''substraction or negation'''
+    '''Subraction or negation: (- a b) returns a-b; (- a) returns -a'''
     if b is None:
         return -a
     else:
@@ -45,10 +45,16 @@ def show_variables(env):
        their values or description
     '''
     print()
-    for var in env:
+    names = sorted(env.keys())
+    for var in names:
+        if var.startswith('__'):
+            continue
         val = env[var]
         if hasattr(val, '__doc__') and not isinstance(val, (int, float, str)):
-            val = val.__doc__
+            val = ' '.join(val.__doc__.split('\n')[:3])
+        if isinstance(val, str):
+            if len(val) > 70:
+                val = val[:70] + "..."
         print("  {}: {}\n".format(var, val))
 exit.__doc__ = "Quits the repl."
 
