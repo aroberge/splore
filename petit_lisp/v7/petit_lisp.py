@@ -147,7 +147,7 @@ def tokenize(s):
     return s.replace("(", " ( ").replace(")", " ) ").split()
 
 
-def load(filename, start_repl=True):
+def load(filename):
     """
     Load the program in filename, execute it, and start the repl.
     If an error occurs, execution stops, and we are left in the repl.
@@ -174,8 +174,7 @@ def load(filename, start_repl=True):
                                                                      full_line))
                 break
             full_line = ""
-    if start_repl:
-        repl()
+    repl()
 
 
 def running_paren_sums(program):

@@ -4,7 +4,6 @@
    * #t, #f, not
    * mathematical comparisons:  =, <, >, <=, >=
    * add negation of number
-   * add ability to load file from repl
 '''
 
 import math
@@ -173,7 +172,7 @@ def tokenize(s):
     return s.replace("(", " ( ").replace(")", " ) ").split()
 
 
-def load(filename, start_repl=True):
+def load(filename):
     """
     Load the program in filename, execute it, and start the repl.
     If an error occurs, execution stops, and we are left in the repl.
@@ -200,8 +199,7 @@ def load(filename, start_repl=True):
                                                                      full_line))
                 break
             full_line = ""
-    if start_repl:
-        repl()
+    repl()
 
 
 def running_paren_sums(program):
@@ -229,9 +227,6 @@ def read_expression():
         open_parens = inp.count("(") - inp.count(")")
     if inp.startswith("parse "):
         pprint.pprint(parse(inp[6:]))
-        return None
-    elif inp.startswith("load "):
-        load(inp[5:].strip(), start_repl=False)
         return None
     return inp
 
