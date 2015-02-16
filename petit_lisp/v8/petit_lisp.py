@@ -12,6 +12,8 @@ import traceback
 import pprint
 import sys
 
+REPL_STARTED = False
+
 
 def my_sum(*args):
     '''Returns the sum of the supplied arguments'''
@@ -199,7 +201,8 @@ def load(filename):
                                                                      full_line))
                 break
             full_line = ""
-    repl()
+    if not REPL_STARTED:
+        repl()
 
 
 def running_paren_sums(program):
@@ -243,23 +246,22 @@ def handle_error():
 
 def repl():
     "A read-eval-print loop."
+    global REPL_STARTED
+    REPL_STARTED = True
     print("\n  ====  Enter (quit) to end.  ====\n")
     while True:
         inp = read_expression()
         if not inp:
             continue
-
         try:
             val = evaluate(parse(inp))
+            if val is not None:
+                print(val)
         except (KeyboardInterrupt, SystemExit):
             print("\nExiting petit_lisp\n")
             exit()
         except:
             handle_error()
-            continue
-
-        if val is not None:
-            print(val)
 
 
 if __name__ == "__main__":

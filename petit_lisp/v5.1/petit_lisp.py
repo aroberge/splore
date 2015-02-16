@@ -167,18 +167,15 @@ def repl():
         inp = read_expression()
         if not inp:
             continue
-
         try:
             val = evaluate(parse(inp))
+            if val is not None:
+                print(val)
         except (KeyboardInterrupt, SystemExit):
             print("\nExiting petit_lisp\n")
             exit()
         except:
             handle_error()
-            continue
-
-        if val is not None:
-            print(val)
 
 if __name__ == '__main__':
     repl()

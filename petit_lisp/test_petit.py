@@ -121,18 +121,34 @@ class TestEvaluate(unittest.TestCase):
 
     @unittest.skipIf(0 < version < 6, '')
     def test_load_file(self):
-        self.assertEqual(None, pl.load("define_variable_test.lisp", start_repl=False))
+        pl.REPL_STARTED = True
+        self.assertEqual(None, pl.load("define_variable_test.lisp"))
         self.assertEqual(3, pl.evaluate(pl.parse("x")))
 
     @unittest.skipIf(0 < version < 7, '')
     def test_load_file_with_comments(self):
-        self.assertEqual(None, pl.load("comments_test.lisp", start_repl=False))
+        pl.REPL_STARTED = True
+        self.assertEqual(None, pl.load("comments_test.lisp"))
         self.assertEqual(49, pl.evaluate(pl.parse("(square 7)")))
 
-    @unittest.skipIf(0 < version < 7, '')
+    @unittest.skipIf(version not in [0, 7, 8], '')
     def test_sqrt(self):
         # verify that math functions are loaded properly; only need to verify one
         self.assertEqual(4.0, pl.evaluate(pl.parse("(sqrt 16)")))
+
+    @unittest.skipIf(0 < version < 9, '')
+    def test_load_python(self):
+        # verify that Python module can be imported properly
+        pl.evaluate(pl.parse('(load-python (quote math))'))
+        self.assertEqual(4.0, pl.evaluate(pl.parse("(sqrt 16)")))
+
+    @unittest.skipIf(0 < version < 9, '')
+    def test_load_python_scope(self):
+        pl.REPL_STARTED = True
+        pl.load("scope_test.lisp")
+        self.assertEqual(3, pl.evaluate(pl.parse("(* 1 pi)")))
+        from math import pi
+        self.assertEqual(pi, pl.evaluate(pl.parse("(mul_pi 1)")))
 
 
 class TestLogic(unittest.TestCase):
@@ -140,7 +156,7 @@ class TestLogic(unittest.TestCase):
     @unittest.skipIf(0 < version < 8, '')
     def test_if(self):
         # test "if", "#t", "#f"
-        self.assertEqual(None, pl.evaluate(pl.parse("(if #t (define x 1) (define x 2))")))
+        pl.evaluate(pl.parse("(if #t (define x 1) (define x 2))"))
         self.assertEqual(1, pl.evaluate(pl.parse("x")))
         self.assertEqual(None, pl.evaluate(pl.parse("(if #f (define x 3) (define x 4))")))
         self.assertEqual(4, pl.evaluate(pl.parse("x")))
