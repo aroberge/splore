@@ -121,12 +121,12 @@ class TestEvaluate(unittest.TestCase):
 
     @unittest.skipIf(0 < version < 6, '')
     def test_load_file(self):
-        self.assertEqual(None, pl.load("test_define_x3.lisp", start_repl=False))
+        self.assertEqual(None, pl.load("define_variable_test.lisp", start_repl=False))
         self.assertEqual(3, pl.evaluate(pl.parse("x")))
 
     @unittest.skipIf(0 < version < 7, '')
     def test_load_file_with_comments(self):
-        self.assertEqual(None, pl.load("test_comments.lisp", start_repl=False))
+        self.assertEqual(None, pl.load("comments_test.lisp", start_repl=False))
         self.assertEqual(49, pl.evaluate(pl.parse("(square 7)")))
 
     @unittest.skipIf(0 < version < 7, '')
