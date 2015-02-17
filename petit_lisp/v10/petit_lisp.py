@@ -110,8 +110,8 @@ def load(filename):
                     print(val)
             except:
                 handle_error()
-                print("\nAn error occured on line {}:\n{}".format(linenumber,
-                                                                     full_line))
+                print("\n    An error occured in load:")
+                print("line {}:\n{}".format(linenumber, full_line))
                 break
             full_line = ""
     if not REPL_STARTED:
@@ -246,7 +246,7 @@ def parse(s):
 def convert_to_list(tokens):
     "Converts a sequence of tokens into a list"
     if len(tokens) == 0:
-        raise SyntaxError('unexpected EOF while reading')
+        raise SyntaxError('convert_to_list: unexpected EOF while reading')
     token = tokens.pop(0)
     if '(' == token:
         lst = []
@@ -255,7 +255,7 @@ def convert_to_list(tokens):
         tokens.pop(0)   # pop off ')'
         return lst
     elif ')' == token:
-        raise SyntaxError('unexpected )')
+        raise SyntaxError('convert_to_list: unexpected )')
     elif "'" == token:
         return ['quote', convert_to_list(tokens)]
     else:
@@ -328,8 +328,8 @@ def repl():
             if val is not None:
                 print(val)
         except (KeyboardInterrupt, SystemExit):
-            print("\nExiting petit_lisp\n")
-            exit()
+            print("\n      Exiting petit_lisp\n")
+            return
         except:
             handle_error()
 
@@ -338,4 +338,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         load(sys.argv[1])
     else:
-        repl()
+        try:
+            repl()
+        except BaseException:
+            sys.stdout.write("\n      Exiting petit_lisp\n")
