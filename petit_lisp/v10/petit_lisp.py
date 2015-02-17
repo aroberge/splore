@@ -1,26 +1,29 @@
-# petit_lisp.py
-#
-# Starting point: tiddlylisp.py by Michael Nielsen.  See
-# http://michaelnielsen.org/ddi/lisp-as-the-maxwells-equations-of-software/
-#
-# Based on Peter Norvig's lispy (http://norvig.com/lispy.html),
-# copyright by Peter Norvig, 2010.
-#
-# Converted to work with Python 3 and extended
-#
+'''version 10
+
+   * Add complex as supported numeric type
+     - note that there must not be any spaces and "j" is used to represent
+       the imaginary part  as in  z = 3+2j
+   * Modified help to allow displaying only user-defined variables.
+   * Added extra help for Python instances.
+   * Added support for 'x as (quote x)
+     - this means we can do (load_python 'math) instead of
+       (load_python (quote math))
+   * Simplified error handling output (eliminated the traceback)
+
+'''
+
 import importlib
 import operator
-import pprint
-import re
-import sys
 import traceback
+import pprint
+import pydoc
+import sys
 
-Symbol = str
 REPL_STARTED = False
 
 
 def my_sum(*args):
-    '''Sums a list of arguments'''
+    '''Returns the sum of the supplied arguments'''
     return sum(arg for arg in args)
 
 
@@ -40,18 +43,35 @@ def my_sub(a, b=None):
         return a - b
 
 
-def show_variables(env):
+def show_variables(env, obj=None):
     '''Inspired by Python's help: shows a list of defined names and
        their values or description
     '''
-    print()
+    if obj is not None:
+        if obj != "user-defined":
+            if obj not in env:
+                print("Unknown variable: ", obj)
+                return
+            else:
+                obj = env[obj]
+                if hasattr(obj, '__doc__') and obj.__doc__ is not None:
+                    val = ' '.join(obj.__doc__.split('\n')[:3])
+                    if len(val) > 75:
+                        val = val[:75] + "..."
+                    print(val)
+                return
+
     names = sorted(env.keys())
     for var in names:
         if var.startswith('__'):
             continue
+        if var == "user-defined":
+            if var in common_env(Env()):
+                continue
         val = env[var]
-        if hasattr(val, '__doc__') and not isinstance(val, (int, float, str)):
-            val = ' '.join(val.__doc__.split('\n')[:3])
+        if not isinstance(val, (int, float, complex, str)):
+            if hasattr(val, '__doc__') and val.__doc__ is not None:
+                val = ' '.join(val.__doc__.split('\n')[:3])
         if isinstance(val, str):
             if len(val) > 75:
                 val = val[:75] + "..."
@@ -151,65 +171,73 @@ class Env(dict):
             return self.outer.find(var)
         else:
             raise ValueError("{} is not defined".format(var))
+
 global_env = common_env(Env())
 
 
 def evaluate(x, env=global_env):
-    "Evaluate an expression in an environment."
-    if isinstance(x, Symbol):              # variable reference
+    "Evaluate an expression in the global environment."
+    if isinstance(x, str):            # variable reference
         return env.find(x)[x]
-    elif not isinstance(x, list):          # constant literal
+    elif not isinstance(x, list):     # constant literal
         return x
-    elif x[0] == 'quote' or x[0] == 'q':  # (quote exp), or (q exp)
+    elif x[0] == 'quote':             # (quote exp), or (q exp)
         (_, exp) = x
         return exp
-    elif x[0] == 'atom?':           # (atom? exp)
-        (_, exp) = x
-        return not isinstance(evaluate(exp, env), list)
-    elif x[0] == 'eq?':             # (eq? exp1 exp2)
-        (_, exp1, exp2) = x
-        v1, v2 = evaluate(exp1, env), evaluate(exp2, env)
-        return (not isinstance(v1, list)) and (v1 == v2)
-    elif x[0] == 'car':             # (car exp)
-        (_, exp) = x
-        return evaluate(exp, env)[0]
-    elif x[0] == 'cdr':             # (cdr exp)
-        (_, exp) = x
-        return evaluate(exp, env)[1:]
-    elif x[0] == 'cons':            # (cons exp1 exp2)
-        (_, exp1, exp2) = x
-        return [evaluate(exp1, env)]+evaluate(exp2, env)
-    elif x[0] == 'cond':            # (cond (p1 e1) ... (pn en))
-        for (p, e) in x[1:]:
-            if evaluate(p, env):
-                return evaluate(e, env)
-    elif x[0] == 'null?':           # (null? exp)
-        (_, exp) = x
-        return evaluate(exp, env) == []
-    elif x[0] == 'if':              # (if test conseq alt)
-        (_, test, conseq, alt) = x
-        return evaluate((conseq if evaluate(test, env) else alt), env)
-    elif x[0] == 'set!':            # (set! var exp)
-        (_, var, exp) = x
-        env.find(var)[var] = evaluate(exp, env)
-    elif x[0] == 'define':          # (define var exp)
-        (_, var, exp) = x
-        env[var] = evaluate(exp, env)
-    elif x[0] == 'lambda':          # (lambda (var*) exp)
-        (_, vars, exp) = x
-        return lambda *args: evaluate(exp, Env(vars, args, env))
-    elif x[0] == 'begin':           # (begin exp*)
+    elif x[0] == 'begin':             # (begin exp*)
         for exp in x[1:]:
             val = evaluate(exp, env)
         return val
-    elif x[0] == 'help':            # (help)
-        show_variables(env)
+    elif x[0] == 'define':            # (define var exp)
+        (_, var, exp) = x
+        env[var] = evaluate(exp, env)
+    elif x[0] == 'set!':              # (set! var exp)
+        (_, var, exp) = x
+        env.find(var)[var] = evaluate(exp, env)
+    elif x[0] == 'lambda':            # (lambda (params*) body)
+        (_, params, body) = x
+        return Procedure(params, body, env)
+    elif x[0] == 'cond':              # (cond (p1 e1) ... (pn en))
+        for (p, e) in x[1:]:
+            if evaluate(p, env):
+                return evaluate(e, env)
+    elif x[0] == 'if':                # (if test if_true other)
+        (_, test, if_true, other) = x
+        return evaluate((if_true if evaluate(test, env) else other), env)
+    elif x[0] == 'help':              # (help)
+        if len(x) > 1:
+            print(x[1])
+            show_variables(env, x[1])
+        else:
+            show_variables(env)
+    elif x[0] == 'python-help':
+        if len(x) > 1:
+            if var not in env:
+                print("Unkown variable", var)
+                return
+            var = evaluate(x[1], env)
+            print("Help for {}: {}".format(x[1], var))
+            pydoc.help(var)
+        else:
+            print("Usage: (python-help variable)")
     elif x[0] == 'load-python':
         load_python(evaluate(x[1], env), env)
-    else:                           # (proc exp*)
+    elif x[0] == 'python-instance':   # (python-instance Class  ....)
+        instance = evaluate(x[1], env)
+        exps = [evaluate(exp, env) for exp in x[2:]]
+        return instance(*exps)
+    elif x[0] == 'with-instance':   # (with-instance a ...)
+        instance = evaluate(x[1], env)
+        attr = getattr(instance, x[2])  # attr = a.b
+        if callable(attr):
+            exps = [evaluate(exp, env) for exp in x[3:]]
+            return attr(*exps)            # a.b(c, d, ...)
+        else:
+            return attr
+    else:                             # ("procedure" exp*)
         exps = [evaluate(exp, env) for exp in x]
-        proc = exps.pop(0)
-        return proc(*exps)
+        procedure = exps.pop(0)
+        return procedure(*exps)
 
 
 def parse(s):
@@ -248,15 +276,7 @@ def atomize(token):
 
 def tokenize(s):
     "Convert a string into a list of tokens."
-    return s.replace("(", " ( ").replace(")", " ) ").replace(" '", " ' ").split()
-
-
-def to_string(exp):
-    "Convert a Python object back into a Lisp-readable string."
-    if not isinstance(exp, list):
-        return str(exp)
-    else:
-        return '(' + ' '.join(to_string(s) for s in exp) + ')'
+    return s.replace("(", " ( ").replace(")", " ) ").replace("'", " ' ").split()
 
 
 def running_paren_sums(program):
@@ -271,42 +291,6 @@ def running_paren_sums(program):
         total += line.count("(")-line.count(")")
         rps.append((linenumber, total))
     return rps
-
-
-def remove_comments(string):
-    '''remove comments identified by using a ; as starting character'''
-    pattern = '([^"]*(?:\\.[^\\"]*))|(;.*$)'
-    # first group captures quoted double strings
-    # second group captures comments (;this is a comment)
-    regex = re.compile(pattern)
-
-    def _replacer(match):
-        # if the 2nd group (capturing comments) is not None,
-        # it means we have captured a non-quoted (real) comment string.
-        if match.group(2) is not None:
-            return ""  # so we will return empty to remove the comment
-        else:  # otherwise, we will return the 1st group
-            return match.group(1)  # captured quoted-string
-    return regex.sub(_replacer, string)
-
-
-def repl():
-    "A prompt-read-eval-print loop."
-    global REPL_STARTED
-    REPL_STARTED = True
-
-    print("\n  ====  Enter (quit) to end.  ====\n")
-    while True:
-        try:
-            inp = read_expression()
-            val = evaluate(parse(inp))
-            if val is not None:
-                print(to_string(val))
-        except (KeyboardInterrupt, SystemExit):
-            print("\nExiting petit_lisp\n")
-            sys.exit()
-        except:
-            handle_error()
 
 
 def read_expression():
@@ -326,11 +310,30 @@ def read_expression():
 
 def handle_error():
     """
-    Simple error handling for both the repl and load.
+    Simple error handling.
     """
-    print("An error occurred.  Here's the Python stack trace:\n")
-    traceback.print_exc()
-    print("")
+    print("\n       {}\n ".format(traceback.format_exc().splitlines()[-1]))
+
+
+def repl():
+    "A read-eval-print loop."
+    global REPL_STARTED
+    REPL_STARTED = True
+
+    print("\n  ====  Enter (quit) to end.  ====\n")
+    while True:
+        inp = read_expression()
+        if not inp:
+            continue
+        try:
+            val = evaluate(parse(inp))
+            if val is not None:
+                print(val)
+        except (KeyboardInterrupt, SystemExit):
+            print("\nExiting petit_lisp\n")
+            exit()
+        except:
+            handle_error()
 
 
 if __name__ == "__main__":
