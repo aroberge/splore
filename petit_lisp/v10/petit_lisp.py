@@ -277,6 +277,14 @@ def tokenize(s):
     return s.replace("(", " ( ").replace(")", " ) ").replace("'", " ' ").split()
 
 
+def to_string(exp):
+    "Convert a Python object back into a Lisp-readable string."
+    if not isinstance(exp, list):
+        return str(exp)
+    else:
+        return '(' + ' '.join(to_string(s) for s in exp) + ')'
+
+
 def running_paren_sums(program):
     """
     Map the lines in the list program to a list whose entries contain
@@ -326,7 +334,7 @@ def repl():
         try:
             val = evaluate(parse(inp))
             if val is not None:
-                print(val)
+                print(to_string(val))
         except (KeyboardInterrupt, SystemExit):
             print("\n      Exiting petit_lisp\n")
             return
