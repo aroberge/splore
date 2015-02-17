@@ -10,6 +10,8 @@
      - this means we can do (load-python 'math) instead of
        (load-python (quote math))
    * Simplified error handling output (eliminated the traceback)
+   # Added #debug
+   # Added to_string()
 
 '''
 
@@ -137,7 +139,8 @@ def common_env(env):
         '#f': False,
         'not': operator.not_,
         'else': True,    # used in cond
-        'load': load
+        'load': load,
+        '#debug': False
     })
 
     # The following will not be used as it will be intercepted by
@@ -180,6 +183,8 @@ global_env = common_env(Env())
 
 def evaluate(x, env=global_env):
     "Evaluate an expression in the global environment."
+    if env.find('#debug')['#debug']:
+        print('   ', to_string(x))
     if isinstance(x, str):            # variable reference
         return env.find(x)[x]
     elif not isinstance(x, list):     # constant literal
@@ -266,8 +271,8 @@ def atomize(token):
     "Converts individual tokens to numbers if possible"
     for conversion in [int, float, complex]:
         try:
-            return conversion(token)
-        except ValueError:
+            return conversion(token.replace('i', 'j'))   # Python uses j instead
+        except ValueError:                               # of i for sqrt(-1)
             pass
     return token
 
@@ -280,6 +285,12 @@ def tokenize(s):
 def to_string(exp):
     "Convert a Python object back into a Lisp-readable string."
     if not isinstance(exp, list):
+        if exp is True:
+            return "#t"
+        elif exp is False:
+            return "#f"
+        elif isinstance(exp, complex):
+            return str(exp).replace('j', 'i')[1:-1]  # remove () put by Python
         return str(exp)
     else:
         return '(' + ' '.join(to_string(s) for s in exp) + ')'
