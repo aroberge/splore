@@ -4,10 +4,11 @@
      - note that there must not be any spaces and "j" is used to represent
        the imaginary part  as in  z = 3+2j
    * Modified help to allow displaying only user-defined variables.
-   * Added extra help for Python instances.
+   * Added (call ...) which is helpful for creating instances of Python classes.
+   * Added (with inst attr ...) to call method or attribute of Python instance.
    * Added support for 'x as (quote x)
-     - this means we can do (load_python 'math) instead of
-       (load_python (quote math))
+     - this means we can do (load-python 'math) instead of
+       (load-python (quote math))
    * Simplified error handling output (eliminated the traceback)
 
 '''
@@ -43,39 +44,42 @@ def my_sub(a, b=None):
         return a - b
 
 
+def show_value(var, env):
+    '''Displays the value of a variable in a given environment or dict'''
+    val = env[var]
+    if not isinstance(val, (int, float, complex, str)):
+        if hasattr(val, '__doc__') and val.__doc__ is not None:
+            val = ' '.join(val.__doc__.split('\n')[:3])
+    if isinstance(val, str):
+        if len(val) > 75:
+            val = val[:75].strip() + "..."
+    print("  {}: {}".format(var, val))
+
+
 def show_variables(env, obj=None):
     '''Inspired by Python's help: shows a list of defined names and
        their values or description
     '''
-    if obj is not None:
-        if obj != "user-defined":
-            if obj not in env:
-                print("Unknown variable: ", obj)
-                return
-            else:
-                obj = env[obj]
-                if hasattr(obj, '__doc__') and obj.__doc__ is not None:
-                    val = ' '.join(obj.__doc__.split('\n')[:3])
-                    if len(val) > 75:
-                        val = val[:75] + "..."
-                    print(val)
-                return
-
-    names = sorted(env.keys())
-    for var in names:
-        if var.startswith('__'):
-            continue
-        if var == "user-defined":
-            if var in common_env(Env()):
+    if obj == "help":
+        print("Usage:  (help), (help variable), (help #globals), "
+               "(help #user-defined)")
+    elif obj not in [None, "#user-defined", "#globals"]:
+        if obj not in env:
+            print("Unknown variable: ", obj)
+        else:
+            show_value(obj, env)
+    else:
+        names = sorted(env.keys())
+        for var in names:
+            if var.startswith('__'):
                 continue
-        val = env[var]
-        if not isinstance(val, (int, float, complex, str)):
-            if hasattr(val, '__doc__') and val.__doc__ is not None:
-                val = ' '.join(val.__doc__.split('\n')[:3])
-        if isinstance(val, str):
-            if len(val) > 75:
-                val = val[:75] + "..."
-        print("  {}: {}\n".format(var, val))
+            if obj == "#user-defined" and var in common_env(Env()):
+                continue
+            elif obj == "#globals" and var not in common_env(Env()):
+                continue
+            show_value(var, env)
+    print()
+
 exit.__doc__ = "Quits the repl."
 
 
@@ -206,7 +210,6 @@ def evaluate(x, env=global_env):
         return evaluate((if_true if evaluate(test, env) else other), env)
     elif x[0] == 'help':              # (help)
         if len(x) > 1:
-            print(x[1])
             show_variables(env, x[1])
         else:
             show_variables(env)
@@ -222,18 +225,24 @@ def evaluate(x, env=global_env):
             print("Usage: (python-help variable)")
     elif x[0] == 'load-python':
         load_python(evaluate(x[1], env), env)
-    elif x[0] == 'python-instance':   # (python-instance Class  ....)
+    elif x[0] == 'call':   # e.g. (call Class  ....)
         instance = evaluate(x[1], env)
-        exps = [evaluate(exp, env) for exp in x[2:]]
-        return instance(*exps)
-    elif x[0] == 'with-instance':   # (with-instance a ...)
-        instance = evaluate(x[1], env)
-        attr = getattr(instance, x[2])  # attr = a.b
-        if callable(attr):
-            exps = [evaluate(exp, env) for exp in x[3:]]
-            return attr(*exps)            # a.b(c, d, ...)
+        if callable(instance):
+            exps = [evaluate(exp, env) for exp in x[2:]]
+            return instance(*exps)
         else:
-            return attr
+            print("{} is not callable".format(x[1]))
+    elif x[0] == 'with':   # (with a ...)
+        instance = evaluate(x[1], env)
+        if hasattr(instance, x[2]):
+            attr = getattr(instance, x[2])  # attr = a.b
+            if callable(attr):
+                exps = [evaluate(exp, env) for exp in x[3:]]
+                return attr(*exps)            # a.b(c, d, ...)
+            else:
+                return attr
+        else:
+            print("{} has no attribute {}.".format(x[1], x[2]))
     else:                             # ("procedure" exp*)
         exps = [evaluate(exp, env) for exp in x]
         procedure = exps.pop(0)
