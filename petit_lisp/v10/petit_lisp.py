@@ -17,7 +17,6 @@ import importlib
 import operator
 import traceback
 import pprint
-import pydoc
 import sys
 
 REPL_STARTED = False
@@ -213,16 +212,6 @@ def evaluate(x, env=global_env):
             show_variables(env, x[1])
         else:
             show_variables(env)
-    elif x[0] == 'python-help':
-        if len(x) > 1:
-            if var not in env:
-                print("Unkown variable", var)
-                return
-            var = evaluate(x[1], env)
-            print("Help for {}: {}".format(x[1], var))
-            pydoc.help(var)
-        else:
-            print("Usage: (python-help variable)")
     elif x[0] == 'load-python':
         load_python(evaluate(x[1], env), env)
     elif x[0] == 'call':   # e.g. (call Class  ....)
