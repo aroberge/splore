@@ -1,6 +1,4 @@
-'''version 11
-
-
+'''New class based version
 '''
 
 import importlib
@@ -8,8 +6,6 @@ import operator
 import traceback
 import pprint
 import sys
-
-REPL_STARTED = False
 
 
 def my_sum(*args):
@@ -104,8 +100,6 @@ def load(filename):
                 print("line {}:\n{}".format(linenumber, full_line))
                 break
             full_line = ""
-    if not REPL_STARTED:
-        repl()
 
 
 def common_env(env):
@@ -355,11 +349,42 @@ def repl():
             handle_error()
 
 
+class InteractiveInterpreter:
+    '''A simple interpreter with built-in help'''
+    def __init__(self):
+        self.started = False
+
+    def repl(self):
+        "A read-eval-print loop."
+        self.started = True
+        print("\n  ====  Enter (quit) to end.  ====\n")
+        while True:
+            inp = read_expression()
+            if not inp:
+                continue
+            try:
+                val = evaluate(parse(inp))
+                if val is not None:
+                    print(to_string(val))
+            except (KeyboardInterrupt, SystemExit):
+                print("\n      Exiting petit_lisp from \n")
+                return
+            except:
+                handle_error()
+
+    def start(self):
+        '''starts the interpreter if not already running'''
+        if self.started:
+            return
+        try:
+            self.repl()
+        except BaseException:
+            # do not use print after KeyboardInterrupt
+            sys.stdout.write("\n      Exiting petit_lisp\n")
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         load(sys.argv[1])
-    else:
-        try:
-            repl()
-        except BaseException:
-            sys.stdout.write("\n      Exiting petit_lisp\n")
+    interpreter = InteractiveInterpreter()
+    interpreter.start()

@@ -83,12 +83,10 @@ class TestEvaluate(unittest.TestCase):
         self.assertEqual(9, pl.evaluate(pl.parse("(square 3)")))
 
     def test_load_file(self):
-        pl.REPL_STARTED = True
         self.assertEqual(None, pl.load("../define_variable_test.lisp"))
         self.assertEqual(3, pl.evaluate(pl.parse("x")))
 
     def test_load_file_with_comments(self):
-        pl.REPL_STARTED = True
         self.assertEqual(None, pl.load("../comments_test.lisp"))
         self.assertEqual(49, pl.evaluate(pl.parse("(square 7)")))
 
@@ -102,7 +100,6 @@ class TestEvaluate(unittest.TestCase):
         self.assertEqual(4.0, pl.evaluate(pl.parse("(sqrt 16)")))
 
     def test_load_python_scope(self):
-        pl.REPL_STARTED = True
         pl.load("../scope_test.lisp")
         self.assertEqual(3, pl.evaluate(pl.parse("(* 1 pi)")))
         from math import pi
