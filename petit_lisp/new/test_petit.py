@@ -10,11 +10,13 @@ class TestRead(unittest.TestCase):
 
     @mock.patch('builtins.input', return_value="(a b c)")
     def test_get_expr_all_at_once(self, input):
-        self.assertEqual("(a b c)", pl.read_expression())
+        repl = pl.InteractiveInterpreter()
+        self.assertEqual("(a b c)", repl.read_expression())
 
     @mock.patch('builtins.input', side_effect=['(a', 'b', 'c)'])
     def test_get_expr_in_parts(self, input):
-        self.assertEqual("(a b c)", pl.read_expression())
+        repl = pl.InteractiveInterpreter()
+        self.assertEqual("(a b c)", repl.read_expression())
 
 
 class TestParse(unittest.TestCase):
