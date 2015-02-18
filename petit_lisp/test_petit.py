@@ -195,5 +195,29 @@ class TestLogic(unittest.TestCase):
         self.assertEqual(3, pl.evaluate(pl.parse("(abs2 -3)")))
         self.assertEqual(0, pl.evaluate(pl.parse("(abs2 0)")))
 
+
+class TestLists(unittest.TestCase):
+
+    @unittest.skipIf(0 < version < 11, '')
+    def test_cons(self):
+        expr = "(define a (cons 1 (cons 2 (cons 3 (cons 4 '())))))"
+        expr2 = "'(1 2 3 4)"
+        pl.evaluate(pl.parse(expr))
+        self.assertEqual(pl.evaluate(pl.parse(expr2)), pl.evaluate(pl.parse("a")))
+
+    @unittest.skipIf(0 < version < 11, '')
+    def test_car(self):
+        expr = "(define a (cons 1 (cons 2 (cons 3 (cons 4 '())))))"
+        expr2 = "(car a)"
+        pl.evaluate(pl.parse(expr))
+        self.assertEqual(1, pl.evaluate(pl.parse(expr2)))
+
+    @unittest.skipIf(0 < version < 11, '')
+    def test_cdr(self):
+        expr = "(define a (cons 1 (cons 2 (cons 3 (cons 4 '())))))"
+        expr2 = "(cdr a)"
+        pl.evaluate(pl.parse(expr))
+        self.assertEqual(pl.evaluate(pl.parse("'(2 3 4)")), pl.evaluate(pl.parse(expr2)))
+
 if __name__ == '__main__':
     unittest.main()
