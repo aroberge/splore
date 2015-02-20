@@ -82,7 +82,7 @@ def load(filename):
     """Execute a program in filename, and start the repl if not already running.
     If an error occurs, execution stops, and we are left in the repl.
     """
-    print("\n ==> Loading and executing {}\n".format(filename))
+    print("    ==> Loading and executing {}".format(filename))
 
     with open(filename, "r") as f:
         program = f.readlines()
