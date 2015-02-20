@@ -4,6 +4,8 @@ import mock
 import unittest
 import petit_lisp as pl
 
+pl.evaluate(pl.parse("(load 'default_language.lisp)"))
+
 
 class TestRead(unittest.TestCase):
     '''Ensures that we handle user input correctly'''

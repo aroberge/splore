@@ -7,27 +7,6 @@ import traceback
 import sys
 
 
-def my_sum(*args):
-    '''Returns the sum of the supplied arguments'''
-    return sum(arg for arg in args)
-
-
-def my_prod(*args):
-    '''Returns the product of the supplied arguments'''
-    ans = 1
-    for arg in args:
-        ans *= arg
-    return ans
-
-
-def my_sub(a, b=None):
-    '''Subraction or negation: (- a b) returns a-b; (- a) returns -a'''
-    if b is None:
-        return -a
-    else:
-        return a - b
-
-
 exit.__doc__ = "Quits the repl."
 
 
@@ -41,7 +20,7 @@ def load(filename):
     """Execute a program in filename, and start the repl if not already running.
     If an error occurs, execution stops, and we are left in the repl.
     """
-    print("\n ==> Loading and executing {}\n".format(filename))
+    print("    --> Loading and executing {}".format(filename))
 
     with open(filename, "r") as f:
         program = f.readlines()
@@ -57,9 +36,10 @@ def load(filename):
                 val = evaluate(parse(full_line))
                 if val is not None:
                     print(val)
-            except:
-                print("\n    An error occured in load:")
+            except Exception as e:
+                print("\n    An error occured in loading {}:".format(filename))
                 print("line {}:\n{}".format(linenumber, full_line))
+                print('      {}: {}'.format(type(e).__name__, e))
                 break
             full_line = ""
 
@@ -68,9 +48,9 @@ def common_env(env):
     "Add some built-in procedures and variables to the environment."
     env = Env()
     env.update({
-        '+': my_sum,
-        '-': my_sub,
-        '*': my_prod,
+        # '+': my_sum,
+        # '-': my_sub,
+        # '*': my_prod,
         '/': operator.truediv,
         '//': operator.floordiv,
         '>': operator.gt,
@@ -100,11 +80,24 @@ def common_env(env):
 
 class Procedure(object):
     "A user-defined procedure."
-    def __init__(self, params, body, env):
+    def __init__(self, params, body, env, opt_param=False):
         self.params, self.body, self.env = params, body, env
+        self.opt_param = opt_param
 
     def __call__(self, *args):
+        if self.opt_param:
+            args = self.pack_args(args)
         return evaluate(self.body, Env(self.params, args, self.env))
+
+    def pack_args(self, args):
+        '''ensures that any extra arguments are packed into a list'''
+        if ((len(args) > self.opt_param + 1) or
+                (not isinstance(args[self.opt_param], list))):
+            newargs = [arg for arg in args[:self.opt_param]]
+            newargs.append(list(args[self.opt_param:]))
+            return tuple(newargs)
+        else:
+            return args
 
 
 class Env(dict):
@@ -127,10 +120,7 @@ global_env = common_env(Env())
 
 
 def evaluate(x, env=global_env):
-    "Evaluate an expression in the global environment."
-    global CURRENT_ENV
-    CURRENT_ENV = env
-
+    "Evaluate an expression in an environment."
     if isinstance(x, str):            # variable reference
         return env.find(x)[x]
     elif not isinstance(x, list):     # constant literal
@@ -171,7 +161,11 @@ def evaluate(x, env=global_env):
         env.find(var)[var] = evaluate(exp, env)
     elif first == 'lambda':            # (lambda (params*) body)
         (_, params, body) = x
-        return Procedure(params, body, env)
+        opt_param = False
+        if '.' in params:
+            opt_param = params.index('.')
+            params.pop(opt_param)
+        return Procedure(params, body, env, opt_param)
     elif first == 'cond':              # (cond (p1 e1) ... (pn en))
         for (p, e) in x[1:]:
             if evaluate(p, env):
@@ -276,8 +270,10 @@ class InteractiveInterpreter:
             except (KeyboardInterrupt, SystemExit):
                 print("\n   Goodbye!")
                 return
-            except:
-                print("\n{}\n ".format(traceback.format_exc().splitlines()[-1]))
+            except Exception as e:
+                print('      {}: {}'.format(type(e).__name__, e))
+                if global_env["#debug"]:
+                    traceback.print_exc()
 
     def read_expression(self):
         '''Reads an expression from a prompt'''
@@ -314,6 +310,7 @@ class InteractiveInterpreter:
             self.repl()
         except BaseException:
             # do not use print after KeyboardInterrupt
+            raise
             sys.stdout.write("\n      Exiting petit_lisp.")
 
     def to_string(self, exp):
@@ -369,5 +366,7 @@ class InteractiveInterpreter:
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         load(sys.argv[1])
+    else:
+        load("default_language.lisp")
     interpreter = InteractiveInterpreter()
     interpreter.start()
