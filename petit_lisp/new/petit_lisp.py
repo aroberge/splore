@@ -16,6 +16,12 @@ def load_python(module, env):
     env.update(vars(mod))
 
 
+def from_python_load(module, env, names=None):
+    mod = importlib.import_module(module)
+    for name in names:
+        env.update({name: getattr(mod, name)})
+
+
 def load(filename):
     """Execute a program in filename, and start the repl if not already running.
     If an error occurs, execution stops, and we are left in the repl.
@@ -178,6 +184,8 @@ def evaluate(x, env=global_env):
         return evaluate(exp, env) == []
     elif first == 'load-python':
         load_python(evaluate(x[1], env), env)
+    elif first == 'from-python-load':
+        from_python_load(evaluate(x[1], env), env, names=[evaluate(arg, env) for arg in x[2:]])
     elif first == 'with':   # (with a ...)
         instance = evaluate(x[1], env)
         if hasattr(instance, x[2]):
