@@ -106,6 +106,27 @@ def common_env(env):
     return env
 
 
+class UserString:
+
+    def __init__(self, env):
+        self.env = env
+        self.counter = 1
+        pattern = r'"(?:[^"])*"'
+        # group captures quoted double strings
+        # does not work with escaped double quotes \"
+        self.regex = re.compile(pattern)
+
+    def record(self, s):
+        symbol = "_UserString_{}".format(self.counter)
+        self.env[symbol] = s
+        self.counter += 1
+        return symbol
+
+    def process_string(self, string):
+        '''docstring'''
+        print(re.findall(self.regex, string))
+
+
 class Procedure(object):
     "A user-defined procedure."
     def __init__(self, params, body, env, opt_param=False):
