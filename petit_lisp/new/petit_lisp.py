@@ -3,6 +3,7 @@
 
 import importlib
 import operator
+import re
 import traceback
 import sys
 
@@ -10,22 +11,36 @@ import sys
 exit.__doc__ = "Quits the repl."
 
 
-def load_python(module, env):
-    '''Loads a Python module in a given environment'''
+def load_python(module, env=None):
+    '''Usage (load-py 'module_name)'''
     mod = importlib.import_module(module)
     env.update(vars(mod))
 
 
-def from_python_load(module, env, names=None):
+def from_python_load(module, *names, env=None):
+    '''Usage (from-py-load 'module_name 'var1 'var2 ...)'''
     mod = importlib.import_module(module)
     for name in names:
         env.update({name: getattr(mod, name)})
 
 
-def from_python_load_as(module, env, names=None):
+def from_python_load_as(module, *names, env=None):
+    '''Usage: (from-py-load-as 'module_name '(var1 name1) '(var2 name2) ...)'''
     mod = importlib.import_module(module)
-    name, name_as = names
-    env.update({name_as: getattr(mod, name)})
+    for name, name_as in names:
+        env.update({name_as: getattr(mod, name)})
+
+
+def with_python_instance(inst, attr, *args):
+    '''Usage: (with-py-inst instance 'attribute OR method arg1 arg 2 ...)'''
+    if hasattr(inst, attr):
+        attr = getattr(inst, attr)
+        if callable(attr):
+            return attr(*args)
+        else:
+            return attr
+    else:
+        print("{} has no attribute {}.".format(inst, attr))
 
 
 def load(filename):
@@ -60,9 +75,6 @@ def common_env(env):
     "Add some built-in procedures and variables to the environment."
     env = Env()
     env.update({
-        # '+': my_sum,
-        # '-': my_sub,
-        # '*': my_prod,
         '/': operator.truediv,
         '//': operator.floordiv,
         '>': operator.gt,
@@ -76,7 +88,11 @@ def common_env(env):
         'not': operator.not_,
         'else': True,    # used in cond
         'load': load,
-        '#debug': False,
+        'load-py': load_python,
+        'from-py-load': from_python_load,
+        'from-py-load-as': from_python_load_as,
+        'with-py-inst': with_python_instance,
+        'DEBUG': False,
         'nil': []
     })
 
@@ -188,27 +204,24 @@ def evaluate(x, env=global_env):
     elif first == 'null?':             # (null? exp)
         (_, exp) = x
         return evaluate(exp, env) == []
-    elif first == 'load-python':
-        load_python(evaluate(x[1], env), env)
-    elif first == 'from-python-load':
-        from_python_load(evaluate(x[1], env), env, names=[evaluate(arg, env) for arg in x[2:]])
-    elif first == 'from-python-load-as':
-        from_python_load_as(evaluate(x[1], env), env, names=[evaluate(arg, env) for arg in x[2:]])
-    elif first == 'with':   # (with a ...)
-        instance = evaluate(x[1], env)
-        if hasattr(instance, x[2]):
-            attr = getattr(instance, x[2])  # attr = a.b
-            if callable(attr):
-                exps = [evaluate(exp, env) for exp in x[3:]]
-                return attr(*exps)          # a.b(c, d, ...)
-            else:
-                return attr
-        else:
-            print("{} has no attribute {}.".format(x[1], x[2]))
+    # elif first == 'with':   # (with a ...)
+    #     instance = evaluate(x[1], env)
+    #     if hasattr(instance, x[2]):
+    #         attr = getattr(instance, x[2])  # attr = a.b
+    #         if callable(attr):
+    #             exps = [evaluate(exp, env) for exp in x[3:]]
+    #             return attr(*exps)          # a.b(c, d, ...)
+    #         else:
+    #             return attr
+    #     else:
+    #         print("{} has no attribute {}.".format(x[1], x[2]))
     else:                             # ("procedure" exp*)
         exps = [evaluate(exp, env) for exp in x]
         procedure = exps.pop(0)
-        return procedure(*exps)
+        try:
+            return procedure(*exps, env=env)
+        except TypeError:
+            return procedure(*exps)
 
 
 def parse(s):
@@ -288,7 +301,7 @@ class InteractiveInterpreter:
                 return
             except Exception as e:
                 print('      {}: {}'.format(type(e).__name__, e))
-                if global_env["#debug"]:
+                if global_env["DEBUG"]:
                     traceback.print_exc()
 
     def read_expression(self):
