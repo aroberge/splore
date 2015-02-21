@@ -95,14 +95,6 @@ def common_env(env):
         'DEBUG': False,
         'nil': []
     })
-
-    # The following will not be used as it will be intercepted by
-    # the same defined inside evaluate; however, by including it here,
-    # we make it available to the (help) facility
-
-    env.update({
-        'load-python': load_python
-    })
     return env
 
 
@@ -225,17 +217,6 @@ def evaluate(x, env=global_env):
     elif first == 'null?':             # (null? exp)
         (_, exp) = x
         return evaluate(exp, env) == []
-    # elif first == 'with':   # (with a ...)
-    #     instance = evaluate(x[1], env)
-    #     if hasattr(instance, x[2]):
-    #         attr = getattr(instance, x[2])  # attr = a.b
-    #         if callable(attr):
-    #             exps = [evaluate(exp, env) for exp in x[3:]]
-    #             return attr(*exps)          # a.b(c, d, ...)
-    #         else:
-    #             return attr
-    #     else:
-    #         print("{} has no attribute {}.".format(x[1], x[2]))
     else:                             # ("procedure" exp*)
         exps = [evaluate(exp, env) for exp in x]
         procedure = exps.pop(0)
