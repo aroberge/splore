@@ -46,11 +46,6 @@ class Python:
         else:
             print("{} has no attribute {}.".format(inst, attr))
 
-    @staticmethod
-    def set_docstring(obj, s):
-        '''Sets the docstring of an object; useful for user-defined procedures'''
-        obj.__doc__ = s
-
 
 class FileLoader:
     """Execute a "lisp" program in a file"""
@@ -124,7 +119,7 @@ def common_env(env):
         'from-py-load': Python.from_module_load,
         'from-py-load-as': Python.from_module_load_variable_as,
         'with-py-inst': Python.with_instance,
-        'set-docstring': Python.set_docstring
+        'set-docstring': Procedure.set_docstring
     })
     return env
 
@@ -155,6 +150,11 @@ class Procedure(object):
             return tuple(newargs)
         else:
             return args
+
+    @staticmethod
+    def set_docstring(obj, s):
+        '''Sets the docstring of an object; useful for user-defined procedures'''
+        obj.__doc__ = s
 
 
 class Env(dict):
