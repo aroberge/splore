@@ -11,8 +11,37 @@ import sys
 exit.__doc__ = "Quits the repl."
 
 
+class Lisp:
+    '''Grouping some basic lisp procedures into logical unit'''
+
+    @staticmethod
+    def begin(*expr):
+        '''Usage: (begin expr1 ... expr_last) ==> evaluates all and returns expr_last'''
+        return expr[-1]
+
+    @staticmethod
+    def is_atom(atom):
+        '''Usage: (atom? expr) ==> true if expr is not a list'''
+        return not isinstance(atom, list)
+
+    @staticmethod
+    def are_equal(val1, val2):
+        '''Usage: (eq? expr1 expr2) ==> true if both are atoms and equal'''
+        return (not isinstance(val1, list)) and (val1 == val2)
+
+    @staticmethod
+    def car(*expr):
+        '''Usage: (car (exp1 exp2 exp3 ...)) ==> exp1'''
+        return expr[0][0]
+
+    @staticmethod
+    def cdr(*expr):
+        '''Usage: (car (exp1 exp2 exp3 ...)) ==> (exp2 exp3 ...)'''
+        return list(expr[0][1:])
+
+
 class Python:
-    '''Grouping functions into logical unit'''
+    '''Grouping Python functions into logical unit'''
 
     @staticmethod
     def load_module(module, env=None):
@@ -99,6 +128,11 @@ def common_env(env):
     "Add some built-in procedures and variables to the environment."
     env = Env()
     env.update({
+        'begin': Lisp.begin,
+        'atom?': Lisp.is_atom,
+        'eq?': Lisp.are_equal,
+        'car': Lisp.car,
+        'cdr': Lisp.cdr,
         '/': operator.truediv,
         '//': operator.floordiv,
         '>': operator.gt,
@@ -184,26 +218,9 @@ def evaluate(x, env=global_env):
         return x
 
     first = x[0]
-    if first == 'quote':              # (quote exp), or (q exp)
+    if first == 'quote':              # (quote exp), or 'exp
         (_, exp) = x
         return exp
-    elif first == 'begin':            # (begin exp*)
-        for exp in x[1:]:
-            val = evaluate(exp, env)
-        return val
-    elif first == 'atom?':            # (atom? exp)
-        (_, exp) = x
-        return not isinstance(evaluate(exp, env), list)
-    elif first == 'eq?':              # (eq? exp1 exp2)
-        (_, exp1, exp2) = x
-        v1, v2 = evaluate(exp1, env), evaluate(exp2, env)
-        return (not isinstance(v1, list)) and (v1 == v2)
-    elif first == 'car':               # (car exp)
-        (_, exp) = x
-        return evaluate(exp, env)[0]
-    elif first == 'cdr':               # (cdr exp)
-        (_, exp) = x
-        return evaluate(exp, env)[1:]
     elif first == 'cons':              # (cons exp1 exp2)
         (_, exp1, exp2) = x
         _x = evaluate(exp2, env)
