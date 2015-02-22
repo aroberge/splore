@@ -100,14 +100,14 @@ class TestEvaluate(unittest.TestCase):
 
     def test_load_python(self):
         # verify that Python module can be imported properly
-        pl.evaluate(pl.parse('(load-python (quote math))'))
+        pl.evaluate(pl.parse('(load-py (quote math))'))
         self.assertEqual(4.0, pl.evaluate(pl.parse("(sqrt 16)")))
 
-    def test_load_python_scope(self):
-        pl.load("../scope_test.lisp")
-        self.assertEqual(3, pl.evaluate(pl.parse("(* 1 pi)")))
-        from math import pi
-        self.assertEqual(pi, pl.evaluate(pl.parse("(mul_pi 1)")))
+    # def test_load_python_scope(self):
+    #     pl.load("../scope_test.lisp")
+    #     self.assertEqual(3, pl.evaluate(pl.parse("(* 1 pi)")))
+    #     from math import pi
+    #     self.assertEqual(pi, pl.evaluate(pl.parse("(mul_pi 1)")))
 
 
 class TestLogic(unittest.TestCase):
@@ -116,14 +116,14 @@ class TestLogic(unittest.TestCase):
         # test "if", "#t", "#f"
         pl.evaluate(pl.parse("(if #t (define x 1) (define x 2))"))
         self.assertEqual(1, pl.evaluate(pl.parse("x")))
-        self.assertEqual(None, pl.evaluate(pl.parse("(if #f (define x 3) (define x 4))")))
+        pl.evaluate(pl.parse("(if #f (define x 3) (define x 4))"))
         self.assertEqual(4, pl.evaluate(pl.parse("x")))
 
     def test_not(self):
         # test "if", "#t", "#f"
-        self.assertEqual(None, pl.evaluate(pl.parse("(if (not #t) (define x 1) (define x 2))")))
+        pl.evaluate(pl.parse("(if (not #t) (define x 1) (define x 2))"))
         self.assertEqual(2, pl.evaluate(pl.parse("x")))
-        self.assertEqual(None, pl.evaluate(pl.parse("(if (not #f) (define x 3) (define x 4))")))
+        pl.evaluate(pl.parse("(if (not #f) (define x 3) (define x 4))"))
         self.assertEqual(3, pl.evaluate(pl.parse("x")))
 
     def test_cond(self):

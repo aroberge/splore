@@ -86,7 +86,7 @@ def common_env(env):
         '#t': True,
         '#f': False,
         'not': operator.not_,
-        'else': True,    # used in cond
+        # 'else': True,    # used in cond
         'load': load,
         'load-py': load_python,
         'from-py-load': from_python_load,
@@ -96,27 +96,6 @@ def common_env(env):
         'nil': []
     })
     return env
-
-
-class UserString:
-
-    def __init__(self, env):
-        self.env = env
-        self.counter = 1
-        pattern = r'"(?:[^"])*"'
-        # group captures quoted double strings
-        # does not work with escaped double quotes \"
-        self.regex = re.compile(pattern)
-
-    def record(self, s):
-        symbol = "_UserString_{}".format(self.counter)
-        self.env[symbol] = s
-        self.counter += 1
-        return symbol
-
-    def process_string(self, string):
-        '''docstring'''
-        print(re.findall(self.regex, string))
 
 
 class Procedure(object):
@@ -262,7 +241,22 @@ def atomize(token):
 
 def tokenize(s):
     "Convert a string into a list of tokens."
+    if '"' in s:
+        s = replace_strings(s)
     return s.replace("(", " ( ").replace(")", " ) ").replace("'", " ' ").split()
+
+
+regex = re.compile('"(?:[^"])*"')
+def replace_strings(s):                       # flake8: noqa
+    '''replace double quoted strings by # followed by their Python id
+       and stores the correspondance in the global environment'''
+    quoted_strings = re.findall(regex, s)
+    for s_ in quoted_strings:
+        symbol = "#{}".format(id(s_))
+        s = s.replace(s_, symbol)
+        global_env[symbol] = s_
+    #s = s.replace('"', '')
+    return s
 
 
 def running_paren_sums(program):
