@@ -87,11 +87,11 @@ class TestEvaluate(unittest.TestCase):
         self.assertEqual(9, pl.evaluate(pl.parse("(square 3)")))
 
     def test_load_file(self):
-        self.assertEqual(None, pl.load("../define_variable_test.lisp"))
+        pl.FileLoader("../define_variable_test.lisp")
         self.assertEqual(3, pl.evaluate(pl.parse("x")))
 
     def test_load_file_with_comments(self):
-        self.assertEqual(None, pl.load("../comments_test.lisp"))
+        pl.FileLoader("../comments_test.lisp")
         self.assertEqual(49, pl.evaluate(pl.parse("(square 7)")))
 
     def test_sqrt(self):
@@ -103,11 +103,11 @@ class TestEvaluate(unittest.TestCase):
         pl.evaluate(pl.parse('(load-py (quote math))'))
         self.assertEqual(4.0, pl.evaluate(pl.parse("(sqrt 16)")))
 
-    # def test_load_python_scope(self):
-    #     pl.load("../scope_test.lisp")
-    #     self.assertEqual(3, pl.evaluate(pl.parse("(* 1 pi)")))
-    #     from math import pi
-    #     self.assertEqual(pi, pl.evaluate(pl.parse("(mul_pi 1)")))
+    def test_load_python_scope(self):
+        pl.FileLoader("scope_test.lisp")
+        self.assertEqual(3, pl.evaluate(pl.parse("(* 1 pi)")))
+        from math import pi
+        self.assertEqual(pi, pl.evaluate(pl.parse("(mul_pi 1)")))
 
 
 class TestLogic(unittest.TestCase):

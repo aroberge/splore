@@ -52,32 +52,45 @@ class Python:
         obj.__doc__ = s
 
 
-def load(filename):
-    """Execute a program in filename, and start the repl if not already running.
-    If an error occurs, execution stops, and we are left in the repl.
-    """
-    print("    --> Loading and executing {}".format(filename))
+class FileLoader:
+    """Execute a "lisp" program in a file"""
 
-    with open(filename, "r") as f:
-        program = f.readlines()
-    rps = running_paren_sums(program)
-    full_line = ""
-    for ((linenumber, paren_sum), program_line) in zip(rps, program):
-        if ";" in program_line:
-            program_line = program_line.split(";")[0]
-        program_line = program_line.strip()
-        full_line += program_line + " "
-        if paren_sum == 0 and full_line.strip():
-            try:
-                val = evaluate(parse(full_line))
-                if val is not None:
-                    print(val)
-            except Exception as e:
-                print("\n    An error occured in loading {}:".format(filename))
-                print("line {}:\n{}".format(linenumber, full_line))
-                print('      {}: {}'.format(type(e).__name__, e))
-                break
-            full_line = ""
+    def __init__(self, filename):
+        print("    --> Loading and executing {}".format(filename))
+
+        with open(filename, "r") as f:
+            program = f.readlines()
+        rps = self.running_paren_sums(program)
+        full_line = ""
+        for ((linenumber, paren_sum), program_line) in zip(rps, program):
+            if ";" in program_line:
+                program_line = program_line.split(";")[0]
+            program_line = program_line.strip()
+            full_line += program_line + " "
+            if paren_sum == 0 and full_line.strip():
+                try:
+                    val = evaluate(parse(full_line))
+                    if val is not None:
+                        print(val)
+                except Exception as e:
+                    print("\n    An error occured in loading {}:".format(filename))
+                    print("line {}:\n{}".format(linenumber, full_line))
+                    print('      {}: {}'.format(type(e).__name__, e))
+                    break
+                full_line = ""
+
+    def running_paren_sums(self, program):
+        """
+        Map the lines in the list program to a list whose entries contain
+        a running sum of the per-line difference between the number of '('
+        parentheses and the number of ')' parentheses.
+        """
+        total = 0
+        rps = []
+        for linenumber, line in enumerate(program):
+            total += line.count("(")-line.count(")")
+            rps.append((linenumber, total))
+        return rps
 
 
 def display(s):
@@ -103,7 +116,7 @@ def common_env(env):
         '#f': False,
         'not': operator.not_,
         # 'else': True,    # used in cond
-        'load': load,
+        'load': FileLoader,
         'DEBUG': False,
         'nil': [],
         'print': display,
@@ -278,20 +291,6 @@ def replace_strings(s):                       # noqa
     return s
 
 
-def running_paren_sums(program):
-    """
-    Map the lines in the list program to a list whose entries contain
-    a running sum of the per-line difference between the number of '('
-    parentheses and the number of ')' parentheses.
-    """
-    total = 0
-    rps = []
-    for linenumber, line in enumerate(program):
-        total += line.count("(")-line.count(")")
-        rps.append((linenumber, total))
-    return rps
-
-
 class InteractiveInterpreter:
     '''A simple interpreter with built-in help'''
     def __init__(self):
@@ -409,8 +408,8 @@ class InteractiveInterpreter:
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        load(sys.argv[1])
+        FileLoader(sys.argv[1])
     else:
-        load("default_language.lisp")
+        FileLoader("default_language.lisp")
     interpreter = InteractiveInterpreter()
     interpreter.start()
