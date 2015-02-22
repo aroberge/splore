@@ -71,6 +71,13 @@ def load(filename):
             full_line = ""
 
 
+def display(s):
+    '''Prints a single string.  Strings are enclosed between double quotes
+       and do not allow escaped double quote characters'''
+       # strings are stored with enclosing double quote characters
+    print(s[1:-1])
+
+
 def common_env(env):
     "Add some built-in procedures and variables to the environment."
     env = Env()
@@ -93,7 +100,8 @@ def common_env(env):
         'from-py-load-as': from_python_load_as,
         'with-py-inst': with_python_instance,
         'DEBUG': False,
-        'nil': []
+        'nil': [],
+        'print': display
     })
     return env
 
@@ -249,13 +257,14 @@ def tokenize(s):
 regex = re.compile('"(?:[^"])*"')
 def replace_strings(s):                       # flake8: noqa
     '''replace double quoted strings by # followed by their Python id
-       and stores the correspondance in the global environment'''
+       and stores the correspondance in the global environment
+
+       Does not make allowance for escaped double quote (\") character.'''
     quoted_strings = re.findall(regex, s)
     for s_ in quoted_strings:
         symbol = "#{}".format(id(s_))
         s = s.replace(s_, symbol)
         global_env[symbol] = s_
-    #s = s.replace('"', '')
     return s
 
 
