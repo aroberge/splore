@@ -142,7 +142,13 @@ class Procedure(object):
 
     def pack_args(self, args):
         '''ensures that any extra arguments are packed into a list'''
-        if ((len(args) > self.opt_param + 1) or
+        if len(args) < self.opt_param:
+            raise Exception("Not enough arguments supplied to procedure.")
+        elif len(args) == self.opt_param:
+            newargs = list(args)
+            newargs.append([])
+            return tuple(newargs)
+        elif ((len(args) > self.opt_param + 1) or
                 (not isinstance(args[self.opt_param], list))):
             newargs = [arg for arg in args[:self.opt_param]]
             newargs.append(list(args[self.opt_param:]))
@@ -236,59 +242,61 @@ def evaluate(x, env=global_env):
             return procedure(*exps)
 
 
-def parse(s):
-    "Parse a Lisp expression from a string."
-    return convert_to_list(tokenize(s))
+class Parser:
+    "Parse a Lisp expression from a string"
+    def __init__(self):
+        self.regex = re.compile('"(?:[^"])*"')
 
+    def parse(self, s):
+        "Parse a Lisp expression from a string."
+        return self.convert_to_list(self.tokenize(s))
 
-def convert_to_list(tokens):
-    "Converts a sequence of tokens into a list"
-    if len(tokens) == 0:
-        raise SyntaxError('convert_to_list: unexpected EOF while reading')
-    token = tokens.pop(0)
-    if '(' == token:
-        lst = []
-        while tokens[0] != ')':
-            lst.append(convert_to_list(tokens))
-        tokens.pop(0)   # pop off ')'
-        return lst
-    elif ')' == token:
-        raise SyntaxError('convert_to_list: unexpected )')
-    elif "'" == token:
-        return ['quote', convert_to_list(tokens)]
-    else:
-        return atomize(token)
+    def convert_to_list(self, tokens):
+        "Converts a sequence of tokens into a list"
+        if len(tokens) == 0:
+            raise SyntaxError('convert_to_list: unexpected EOF while reading')
+        token = tokens.pop(0)
+        if '(' == token:
+            lst = []
+            while tokens[0] != ')':
+                lst.append(self.convert_to_list(tokens))
+            tokens.pop(0)   # pop off ')'
+            return lst
+        elif ')' == token:
+            raise SyntaxError('convert_to_list: unexpected )')
+        elif "'" == token:
+            return ['quote', self.convert_to_list(tokens)]
+        else:
+            return self.atomize(token)
 
+    def atomize(self, token):
+        "Converts individual tokens to numbers if possible"
+        for conversion in [int, float, complex]:
+            try:
+                return conversion(token.replace('i', 'j'))   # Python uses j instead
+            except ValueError:                               # of i for sqrt(-1)
+                pass
+        return token
 
-def atomize(token):
-    "Converts individual tokens to numbers if possible"
-    for conversion in [int, float, complex]:
-        try:
-            return conversion(token.replace('i', 'j'))   # Python uses j instead
-        except ValueError:                               # of i for sqrt(-1)
-            pass
-    return token
+    def tokenize(self, s):
+        "Convert a string into a list of tokens."
+        if '"' in s:
+            s = self.replace_strings(s)
+        return s.replace("(", " ( ").replace(")", " ) ").replace("'", " ' ").split()
 
+    def replace_strings(self, s):                       # noqa
+        '''replace double quoted strings by # followed by their Python id
+           and stores the correspondance in the global environment
 
-def tokenize(s):
-    "Convert a string into a list of tokens."
-    if '"' in s:
-        s = replace_strings(s)
-    return s.replace("(", " ( ").replace(")", " ) ").replace("'", " ' ").split()
+           Does not make allowance for escaped double quote (\") character.'''
+        quoted_strings = re.findall(self.regex, s)
+        for s_ in quoted_strings:
+            symbol = "#{}".format(id(s_))
+            s = s.replace(s_, symbol)
+            global_env[symbol] = s_
+        return s
 
-
-regex = re.compile('"(?:[^"])*"')
-def replace_strings(s):                       # noqa
-    '''replace double quoted strings by # followed by their Python id
-       and stores the correspondance in the global environment
-
-       Does not make allowance for escaped double quote (\") character.'''
-    quoted_strings = re.findall(regex, s)
-    for s_ in quoted_strings:
-        symbol = "#{}".format(id(s_))
-        s = s.replace(s_, symbol)
-        global_env[symbol] = s_
-    return s
+parse = Parser().parse
 
 
 class InteractiveInterpreter:
