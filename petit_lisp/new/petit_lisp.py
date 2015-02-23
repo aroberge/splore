@@ -12,7 +12,15 @@ exit.__doc__ = "Quits the repl."
 
 
 class Lisp:
-    '''Grouping some basic lisp procedures into logical unit'''
+    '''Grouping some basic lisp procedures into logical unit
+
+        The following static methods are invoked within a lisp program as:
+            (proc expr1 expr2 expr3 ...)
+        which we denote below as (proc exprs*). They are then evaluated
+            exps = [evaluate(exp, env) for exp in exprs*]
+        and dispatched to the relevant static method as
+            proc(*exps)
+    '''
 
     @staticmethod
     def begin(*expr):
@@ -97,7 +105,7 @@ class FileLoader:
                     if val is not None:
                         print(val)
                 except Exception as e:
-                    print("\n    An error occured in loading {}:".format(filename))
+                    print("\n    An error occured in loading %s:" % filename)
                     print("line {}:\n{}".format(linenumber, full_line))
                     print('      {}: {}'.format(type(e).__name__, e))
                     break
@@ -120,8 +128,7 @@ class FileLoader:
 def display(s):
     '''Prints a single string.  Strings are enclosed between double quotes
        and do not allow escaped double quote characters'''
-    # strings are stored with enclosing double quote characters
-    print(s[1:-1])
+    print(s[1:-1])  # strings are stored with enclosing double quote characters
 
 
 def common_env(env):
@@ -144,7 +151,6 @@ def common_env(env):
         '#t': True,
         '#f': False,
         'not': operator.not_,
-        # 'else': True,    # used in cond
         'load': FileLoader,
         'DEBUG': False,
         'nil': [],
