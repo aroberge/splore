@@ -4,44 +4,51 @@ https://www.python.org/dev/peps/pep-0302/
 
 When a module is imported, it simply adds a line to its source code 
 prior to execution.
+
+This code was adapted from
+http://stackoverflow.com/questions/43571737/how-to-implement-an-import-hook-that-can-modify-the-source-code-on-the-fly-using/43573798#43573798
+which is a question I asked.
 '''
-print("WARNING: this code does not work.")
-
-import importlib
 import sys
+import os.path
 
-class ExperimentalImporter(object):
-    '''According to PEP 302, an importer only needs two methods:
-       find_module and load_module.
-    '''
+from importlib.abc import Loader, MetaPathFinder
+from importlib.util import spec_from_file_location
 
-    def find_module(self, name, path=None):
-        '''We don't need anything special here, so we just use the standard
-           module finder.
-        '''
-        self.spec = importlib.util.find_spec(name)
-        return self
+class MyMetaFinder(MetaPathFinder):
+    def find_spec(self, fullname, path, target=None):
+        if path is None or path == "":
+            path = [os.getcwd()] # top level import -- 
+        if "." in fullname:
+            *parents, name = fullname.split(".")
+        else:
+            name = fullname
+        for entry in path:
+            if os.path.isdir(os.path.join(entry, name)):
+                # this module has child modules
+                filename = os.path.join(entry, name, "__init__.py")
+                submodule_locations = [os.path.join(entry, name)]
+            else:
+                filename = os.path.join(entry, name + ".py")
+                submodule_locations = None
+            if not os.path.exists(filename):
+                continue
 
-    def find_spec(self, name, *args):
-        '''find_spec apparently needed for custom hook importer using 
-        importlib
-        '''
-        return importlib.util.find_spec(name)
+            return spec_from_file_location(fullname, filename, loader=MyLoader(filename),
+                submodule_search_locations=submodule_locations)
+        return None # we don't know how to import this
 
+class MyLoader(Loader):
+    def __init__(self, filename):
+        self.filename = filename
 
-    def load_module(self, name):
-        '''Load a module, given information returned by find_module().
-        '''
-        if name in sys.modules:
-            return sys.modules[name]
+    def create_module(self, spec):
+        return None # use default module creation semantics
 
-        source = self.module_spec.loader.get_source(name)
-        module = importlib.util.module_from_spec(self.spec)
-        sys.modules[name] = module
-        new_source = source + "\na=42"
-        codeobj = compile(new_source, module.__spec__.origin, 'exec')
-        exec(codeobj, module.__dict__)
+    def exec_module(self, module):
+        with open(self.filename) as f:
+            data = f.read() + "\na=1"
 
-        return module
+        exec(data, vars(module))
 
-sys.meta_path.insert(0, ExperimentalImporter())
+sys.meta_path.insert(0, MyMetaFinder())
