@@ -10,3 +10,5 @@ the value of the variable has been added, confirming that the custom import hook
     Check the value of the variable 'a' of this module.
     >>> test_import.a
     42
+
+I have attempted to implement something similar using `importlib` intead of `imp` since `imp` is deprecated; however, I have not been able to make it work.

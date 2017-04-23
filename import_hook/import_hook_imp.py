@@ -48,4 +48,4 @@ class ExperimentalImporter(object):
 
         return module
 
-sys.meta_path = [ExperimentalImporter()]
+sys.meta_path.insert(0, ExperimentalImporter())
