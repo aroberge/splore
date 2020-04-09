@@ -6,7 +6,7 @@ class App:
     def __init__(self, parent):
         self.parent = parent
         parent.title("Periodic reminder")
-        parent.geometry("250x120")
+        parent.geometry("280x120")
         parent.grid_columnconfigure((0, 1), weight=1)
 
         self.message = tk.StringVar()
@@ -16,7 +16,9 @@ class App:
         )
         tk.Label(self.parent, text="Message").grid(row=1, column=0)
 
-        tk.Label(self.parent, text="Repeat interval").grid(row=2, column=0)
+        tk.Label(self.parent, text="Repeat interval").grid(
+            row=2, column=0, columnspan=2
+        )
 
         self.hours = tk.IntVar()
         self.hours.set(0)
@@ -41,7 +43,11 @@ class App:
     def start_job(self):
         toaster = win10toast.ToastNotifier()
         toaster.show_toast(
-            "Friendly reminder", self.message.get(), duration=10, threaded=True
+            "Friendly reminder",
+            self.message.get(),
+            duration=10,
+            icon_path="",
+            threaded=True,
         )
         self.parent.after(
             (3600 * self.hours.get() + 60 * self.minutes.get()) * 1000, self.start_job
